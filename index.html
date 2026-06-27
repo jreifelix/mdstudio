@@ -821,7 +821,7 @@ function buildSlotGrid() {
     }
 }
 
-async function submitBooking() {
+function submitBooking() {
     const date=document.getElementById('bDate').value;
     const zone=getZone();
     const name=document.getElementById('bName').value.trim();
@@ -837,20 +837,11 @@ async function submitBooking() {
     }
     if(sb.length>=2){ showMsg('err','Este horário já está com lotação máxima (2 ocupantes).'); return; }
 
-    const bk={id:genId(), date, hour:selH, zone, name, gcalEventId:null, createdAt:new Date().toISOString()};
-
-    if (gcalEnabled && gapiReady) {
-        showMsg('ok', '⏳ A sincronizar com Google Calendar…');
-        const evId = await gcalCreateEvent(bk);
-        if (evId) {
-            bk.gcalEventId = evId;
-        } else {
-            showMsg('err','⚠️ Não foi possível sincronizar com o Google Calendar. Reserva guardada localmente.');
-        }
-    }
+    const bk={id:genId(), date, hour:selH, zone, name, createdAt:new Date().toISOString()};
 
     bookings.push(bk);
     saveData();
+    gcalCreateEvent(bk); // fire-and-forget — no popup, no wait
     selH=null;
     document.getElementById('bName').value='';
     document.querySelectorAll('input[name="zone"]').forEach(r=>r.checked=false);
@@ -976,8 +967,7 @@ function onOvClick(e) { if(e.target===document.getElementById('mOv')) closeModal
 function delActiveBk() {
     if(!activeId) return;
     if(!confirm('Tem a certeza que pretende cancelar esta reserva?')) return;
-    const bkToDel = bookings.find(b => b.id === activeId);
-    if (bkToDel?.gcalEventId) gcalDeleteEvent(bkToDel.gcalEventId);
+    gcalDeleteEvent(activeId);
     bookings=bookings.filter(b=>b.id!==activeId);
     saveData();
     closeModal();
@@ -1016,134 +1006,73 @@ function switchPanel(p) {
     }
 }
 
-/* ══════════ GOOGLE CALENDAR ══════════ */
-const GCAL_CLIENT_ID = '75802594514-7596dl1lfgln5thrmpl9msi0me68413i.apps.googleusercontent.com';
-const GCAL_SK        = 'mdstudio_gcal';
-const GCAL_SCOPE     = 'https://www.googleapis.com/auth/calendar.events';
-let tokenClient  = null;
-let gapiReady    = false;
-let gisReady     = false;
-let gcalEnabled  = false;
+/* ══════════ GOOGLE APPS SCRIPT SYNC (sem popup, sem OAuth) ══════════ */
+// Após implementar Code.gs como Web App, cole o URL abaixo:
+const AS_URL = 'https://script.google.com/macros/s/AKfycbz3-Jxd3C1chLFM6IMJCKHuLFMMqUR9QEDxIQZR-JUzQWbfZ8L1MVnzyr4lXNlJ9_xs/exec';
 
-function gcalCfg() {
-    try { return JSON.parse(localStorage.getItem(GCAL_SK) || '{}'); } catch { return {}; }
-}
-function gcalSaveCfg(obj) { localStorage.setItem(GCAL_SK, JSON.stringify(obj)); }
+let gcalEnabled = false;
 
 function gcalLoad() {
-    gcalLoadLibs(GCAL_CLIENT_ID);
-}
-
-function gcalLoadLibs(clientId) {
-    if (!document.getElementById('gapiJs')) {
-        const s = document.createElement('script');
-        s.id = 'gapiJs'; s.src = 'https://apis.google.com/js/api.js';
-        s.onload = () => {
-            gapi.load('client', async () => {
-                await gapi.client.init({});
-                await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest');
-                gapiReady = true;
-                gcalMaybeInit(clientId);
-            });
-        };
-        document.head.appendChild(s);
-    }
-    if (!document.getElementById('gisJs')) {
-        const s = document.createElement('script');
-        s.id = 'gisJs'; s.src = 'https://accounts.google.com/gsi/client';
-        s.onload = () => { gisReady = true; gcalMaybeInit(clientId); };
-        document.head.appendChild(s);
-    }
-}
-
-function gcalMaybeInit(clientId) {
-    if (!gapiReady || !gisReady) return;
-    tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: clientId,
-        scope: GCAL_SCOPE,
-        callback: (resp) => {
-            if (resp.error) { showMsg('err', '❌ Erro Google Calendar: ' + resp.error); return; }
-            gcalEnabled = true;
-            gapi.client.setToken({ access_token: resp.access_token });
-            gcalSaveCfg({ token: resp.access_token });
-            updateSyncBtn();
-            gcalSyncFromCalendar();
-            showMsg('ok', '✅ Google Calendar ligado! A sincronizar reservas…');
-        }
-    });
-    const cfg = gcalCfg();
-    if (cfg.token) {
-        gapi.client.setToken({ access_token: cfg.token });
-        gcalEnabled = true;
-        updateSyncBtn();
-        gcalSyncFromCalendar(true);
-    } else {
-        // First time — request authorization automatically
-        tokenClient.requestAccessToken({ prompt: 'consent' });
-    }
-}
-
-function updateSyncBtn() {
+    if (!AS_URL || AS_URL.startsWith('COLE')) return;
+    gcalEnabled = true;
     const sBtn = document.getElementById('syncBtn');
-    if (sBtn) sBtn.style.display = gcalEnabled ? 'inline-flex' : 'none';
+    if (sBtn) sBtn.style.display = 'inline-flex';
+    gcalSyncFromCalendar(true);
 }
 
-async function gcalCreateEvent(bk) {
-    if (!gcalEnabled || !gapiReady) return null;
+async function gcalSyncFromCalendar(silent = false) {
+    if (!gcalEnabled) return;
+    const sBtn = document.getElementById('syncBtn');
+    if (sBtn) { sBtn.textContent = '⏳'; sBtn.disabled = true; }
+    try {
+        const resp = await fetch(`${AS_URL}?action=list`, { redirect: 'follow' });
+        const events = await resp.json();
+        if (!Array.isArray(events)) throw new Error('resposta inválida');
+        const parsed = events.map(gcalParseEvent).filter(Boolean);
+        bookings = parsed;
+        saveData();
+        buildSlotGrid();
+        renderCalendar();
+        renderTodayList();
+        updateZoneSt();
+        if (!silent) showMsg('ok', `🔄 Sincronizado! ${parsed.length} reserva${parsed.length !== 1 ? 's' : ''} encontrada${parsed.length !== 1 ? 's' : ''}.`);
+    } catch(e) {
+        console.warn('Sync failed:', e);
+        if (!silent) showMsg('err', '⚠️ Erro ao sincronizar. Verifique o URL do Apps Script.');
+    } finally {
+        if (sBtn) { sBtn.textContent = '🔄'; sBtn.disabled = false; }
+    }
+}
+
+function gcalCreateEvent(bk) {
+    if (!gcalEnabled) return;
     const p2 = n => String(n).padStart(2, '0');
     const meta = `[MDSTUDIO_v1]\ndate: ${bk.date}\nhour: ${bk.hour}\nzone: ${bk.zone}\nname: ${bk.name}\nid: ${bk.id}`;
-    const event = {
-        summary:     `MD.Studio | ${bk.zone === ZC ? '🏃 Cardio' : '💪 Musculação'} — ${bk.name}`,
-        location:    'MD.Studio Fitness',
-        description: meta,
-        start: { dateTime: `${bk.date}T${p2(bk.hour)}:00:00`,     timeZone: 'Europe/Lisbon' },
-        end:   { dateTime: `${bk.date}T${p2(bk.hour + 1)}:00:00`, timeZone: 'Europe/Lisbon' },
-        colorId: bk.zone === ZC ? '7' : '6'
-    };
-    try {
-        const resp = await gapi.client.calendar.events.insert({ calendarId: 'primary', resource: event });
-        return resp.result.id;
-    } catch(e) {
-        if (e.status === 401) { gcalEnabled = false; updateGcalBtn(); showMsg('err','⚠️ Sessão Google expirada. Volte a ligar o Calendar.'); }
-        console.warn('GCal createEvent failed:', e);
-        return null;
-    }
+    fetch(AS_URL, {
+        method:  'POST',
+        mode:    'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body:    JSON.stringify({
+            action:      'create',
+            summary:     `MD.Studio | ${bk.zone === ZC ? '🏃 Cardio' : '💪 Musculação'} — ${bk.name}`,
+            description: meta,
+            location:    'MD.Studio Fitness',
+            start:       `${bk.date}T${p2(bk.hour)}:00:00`,
+            end:         `${bk.date}T${p2(bk.hour + 1)}:00:00`
+        })
+    }).catch(e => console.warn('Create event failed:', e));
 }
 
-async function gcalDeleteEvent(eventId) {
-    if (!gcalEnabled || !gapiReady || !eventId) return;
-    try {
-        await gapi.client.calendar.events.delete({ calendarId: 'primary', eventId });
-    } catch(e) {
-        console.warn('GCal deleteEvent failed:', e);
-    }
+function gcalDeleteEvent(mdId) {
+    if (!gcalEnabled || !mdId) return;
+    fetch(AS_URL, {
+        method:  'POST',
+        mode:    'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body:    JSON.stringify({ action: 'delete', mdId })
+    }).catch(e => console.warn('Delete event failed:', e));
 }
 
-/* ── Fetch all MD.Studio events from Google Calendar ── */
-async function gcalFetchEvents() {
-    if (!gcalEnabled || !gapiReady) return null;
-    const now = new Date();
-    const tMin = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-    const tMax = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 60).toISOString();
-    try {
-        const resp = await gapi.client.calendar.events.list({
-            calendarId:  'primary',
-            timeMin:     tMin,
-            timeMax:     tMax,
-            q:           'MD.Studio |',
-            singleEvents: true,
-            orderBy:     'startTime',
-            maxResults:  500
-        });
-        return resp.result.items || [];
-    } catch(e) {
-        if (e.status === 401) { gcalEnabled = false; updateGcalBtn(); showMsg('err','⚠️ Sessão Google expirada. Volte a ligar o Calendar.'); }
-        console.warn('GCal fetchEvents failed:', e);
-        return null;
-    }
-}
-
-/* ── Parse a GCal event into a booking object ── */
 function gcalParseEvent(ev) {
     const desc = ev.description || '';
     if (!desc.includes('[MDSTUDIO_v1]')) return null;
@@ -1154,28 +1083,7 @@ function gcalParseEvent(ev) {
     const name = get('name');
     const id   = get('id') || genId();
     if (!date || isNaN(hour) || !zone || !name) return null;
-    return { id, date, hour, zone, name, gcalEventId: ev.id, createdAt: ev.created || new Date().toISOString() };
-}
-
-/* ── Pull all bookings FROM Google Calendar (source of truth) ── */
-async function gcalSyncFromCalendar(silent = false) {
-    if (!gcalEnabled || !gapiReady) return;
-    const sBtn = document.getElementById('syncBtn');
-    if (sBtn) { sBtn.textContent = '⏳'; sBtn.disabled = true; }
-
-    const events = await gcalFetchEvents();
-
-    if (sBtn) { sBtn.textContent = '🔄'; sBtn.disabled = false; }
-    if (events === null) return;
-
-    const parsed = events.map(gcalParseEvent).filter(Boolean);
-    bookings = parsed;
-    saveData();
-    buildSlotGrid();
-    renderCalendar();
-    renderTodayList();
-    updateZoneSt();
-    if (!silent) showMsg('ok', `🔄 Sincronizado! ${parsed.length} reserva${parsed.length !== 1 ? 's' : ''} encontrada${parsed.length !== 1 ? 's' : ''}.`);
+    return { id, date, hour, zone, name, createdAt: ev.start || new Date().toISOString() };
 }
 </script>
 </body>
