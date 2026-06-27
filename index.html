@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#090b12">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MD.Studio">
+    <title>MD.Studio — Gestão do Estúdio</title>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg:        #090b12;
+            --surface:   #111520;
+            --card:      #161c2c;
+            --hover:     #1c2438;
+            --border:    #252f46;
+            --red:       #e84560;
+            --red-glow:  rgba(232,69,96,.18);
+            --blue:      #38bdf8;
+            --blue-dim:  rgba(56,189,248,.14);
+            --orange:    #fb923c;
+            --orange-dim:rgba(251,146,60,.14);
+            --green:     #4ade80;
+            --green-dim: rgba(74,222,128,.12);
+            --text:      #eef2ff;
+            --muted:     #5b6b8a;
+            --radius:    12px;
+            --radius-sm: 8px;
+            --shadow:    0 24px 48px rgba(0,0,0,.55);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            font-size: 13.5px;
+            line-height: 1.5;
+        }
+
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+        /* global touch optimizations */
+        button, label, a, input {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        /* ═════════════════════ LOGIN ═════════════════════ */
+        #loginScreen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                radial-gradient(ellipse 70% 50% at 50% -5%, rgba(232,69,96,.14) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 40% at 100% 110%, rgba(56,189,248,.07) 0%, transparent 55%),
+                var(--bg);
+        }
+
+        .login-wrap { width: 100%; max-width: 400px; padding: 20px; }
+
+        .login-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 48px 40px 40px;
+            box-shadow: var(--shadow);
+        }
+
+        .login-brand { text-align: center; margin-bottom: 38px; }
+
+        .brand-icon {
+            width: 76px; height: 76px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, var(--red) 0%, #9a1020 100%);
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 36px;
+            box-shadow: 0 8px 32px rgba(232,69,96,.4);
+            margin-bottom: 18px;
+        }
+
+        .brand-name {
+            font-size: 28px; font-weight: 900;
+            letter-spacing: 4px; color: var(--text);
+        }
+        .brand-name em { color: var(--red); font-style: normal; }
+        .brand-sub { color: var(--muted); font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; margin-top: 5px; }
+
+        /* shared input/label */
+        .fg { margin-bottom: 18px; }
+        .fg label {
+            display: block; font-size: 10.5px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 7px;
+        }
+        input[type="text"], input[type="password"], input[type="date"] {
+            width: 100%; padding: 12px 14px;
+            background: var(--card); border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--text);
+            font-size: 14px; font-family: inherit; outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        input:focus {
+            border-color: var(--red);
+            box-shadow: 0 0 0 3px rgba(232,69,96,.12);
+        }
+        input::placeholder { color: var(--muted); }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(.5); cursor: pointer; }
+
+        /* buttons */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 11px 20px;
+            border: none; border-radius: var(--radius-sm);
+            font-size: 13px; font-weight: 700; font-family: inherit;
+            cursor: pointer; transition: all .18s; letter-spacing: .4px; white-space: nowrap;
+        }
+        .btn-full { width: 100%; }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--red), #9a1020);
+            color: #fff; box-shadow: 0 4px 18px rgba(232,69,96,.28);
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(232,69,96,.4); }
+        .btn-primary:active { transform: none; }
+        .btn-ghost {
+            background: transparent; border: 1.5px solid var(--border); color: var(--muted);
+        }
+        .btn-ghost:hover { border-color: var(--red); color: var(--red); }
+        .btn-danger {
+            background: var(--red-glow); border: 1.5px solid rgba(232,69,96,.4); color: var(--red);
+        }
+        .btn-danger:hover { background: rgba(232,69,96,.28); }
+        .btn-sm { padding: 8px 14px; font-size: 12px; }
+
+        .login-err {
+            text-align: center; color: var(--red); font-size: 13px;
+            padding: 10px; background: var(--red-glow);
+            border: 1px solid rgba(232,69,96,.3);
+            border-radius: var(--radius-sm); margin-top: 14px; display: none;
+        }
+
+        /* ═════════════════════ APP ═════════════════════ */
+        #app { display: none; flex-direction: column; min-height: 100vh; }
+
+        .topbar {
+            background: var(--surface); border-bottom: 1px solid var(--border);
+            padding: 0 24px; height: 58px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 50;
+        }
+
+        .tb-brand {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 16px; font-weight: 900; letter-spacing: 3px;
+        }
+        .tb-icon {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: linear-gradient(135deg, var(--red), #9a1020);
+            display: flex; align-items: center; justify-content: center; font-size: 14px;
+        }
+        .tb-brand em { color: var(--red); font-style: normal; }
+
+        .tb-right { display: flex; align-items: center; gap: 16px; }
+        .tb-date { color: var(--muted); font-size: 12px; }
+
+        .main-grid {
+            flex: 1; display: grid; grid-template-columns: 360px 1fr; gap: 0;
+            max-height: calc(100vh - 58px); overflow: hidden;
+        }
+
+        .panel-left {
+            border-right: 1px solid var(--border);
+            overflow-y: auto; padding: 22px 22px 32px;
+        }
+        .panel-right { overflow-y: auto; padding: 22px 22px 32px; }
+
+        /* Panel titles */
+        .pt {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
+        }
+        .pt-icon {
+            width: 32px; height: 32px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;
+        }
+        .pt-icon.red  { background: var(--red-glow); }
+        .pt-icon.blue { background: var(--blue-dim); }
+        .pt h2 { font-size: 14.5px; font-weight: 700; }
+        .pt p  { font-size: 11px; color: var(--muted); }
+
+        hr.div { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+        .sec-lbl {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1.8px; color: var(--muted); margin-bottom: 9px;
+        }
+
+        /* ── ZONE SELECTOR ── */
+        .zone-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .zone-radio { display: none; }
+        .zone-card {
+            border: 2px solid var(--border); border-radius: var(--radius);
+            padding: 14px 8px 12px; text-align: center; cursor: pointer;
+            background: var(--card); transition: all .18s; user-select: none;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+        }
+        .zone-card:hover { border-color: rgba(232,69,96,.5); background: var(--hover); }
+        .zone-radio:checked + .zone-card { border-color: var(--red); background: var(--red-glow); }
+        .z-ico { font-size: 26px; display: block; }
+        .z-nm  { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+        .zone-radio:checked + .zone-card .z-nm { color: var(--red); }
+        .z-st  { font-size: 10px; color: var(--muted); }
+
+        /* ── SLOT GRID ── */
+        .slot-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+        .slot-btn {
+            padding: 9px 4px; background: var(--card); border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--muted);
+            font-size: 11.5px; font-weight: 700; font-family: inherit;
+            cursor: pointer; transition: all .14s; text-align: center;
+        }
+        .slot-btn:hover:not(:disabled) { border-color: var(--red); color: var(--text); background: var(--hover); }
+        .slot-btn.sel { background: var(--red); border-color: var(--red); color: #fff; }
+        .slot-btn.zone-taken { background: var(--orange-dim); border-color: rgba(251,146,60,.4); color: var(--orange); cursor: not-allowed; }
+        .slot-btn.full       { background: var(--red-glow); border-color: rgba(232,69,96,.35); color: rgba(232,69,96,.55); cursor: not-allowed; }
+        .slot-btn.past       { opacity: .3; cursor: not-allowed; background: var(--bg); }
+
+        /* ── ALERTS ── */
+        .alert {
+            padding: 11px 14px; border-radius: var(--radius-sm);
+            font-size: 12.5px; margin-top: 11px; line-height: 1.45; display: none;
+        }
+        .alert.ok  { display: block; background: var(--green-dim); border: 1px solid rgba(74,222,128,.3); color: #86efac; }
+        .alert.err { display: block; background: var(--red-glow);   border: 1px solid rgba(232,69,96,.35); color: #fca5a5; }
+
+        /* ── TODAY LIST ── */
+        .mini-bk {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 11px; background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); margin-bottom: 6px;
+            cursor: pointer; transition: border-color .15s;
+        }
+        .mini-bk:hover { border-color: var(--red); }
+        .mb-ico  { font-size: 18px; flex-shrink: 0; }
+        .mb-tm   { font-size: 12px; font-weight: 700; }
+        .mb-dt   { font-size: 10.5px; color: var(--muted); }
+        .empty   { text-align: center; padding: 18px; color: var(--muted); font-size: 12.5px; }
+
+        /* ═════════════════════ CALENDAR ═════════════════════ */
+        .view-tabs { display: flex; gap: 5px; margin-bottom: 14px; flex-wrap: wrap; }
+        .v-tab {
+            padding: 7px 15px; background: var(--card); border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--muted);
+            font-size: 12px; font-weight: 700; font-family: inherit;
+            cursor: pointer; transition: all .15s; letter-spacing: .3px;
+        }
+        .v-tab.act { background: var(--red); border-color: var(--red); color: #fff; }
+        .v-tab:hover:not(.act) { border-color: var(--red); color: var(--text); }
+
+        .range-row {
+            display: none; align-items: center; gap: 7px;
+            margin-bottom: 14px; flex-wrap: wrap;
+        }
+        .range-row.show { display: flex; }
+        .range-row input { width: auto; flex: 1; min-width: 120px; }
+        .range-sep { color: var(--muted); font-size: 11px; }
+
+        .legend { display: flex; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+        .leg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+        .leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+        /* calendar grid */
+        .cal-wrap { overflow-x: auto; }
+        .cal-grid  { display: grid; min-width: 380px; }
+
+        .cal-hdr {
+            padding: 7px 5px 9px; text-align: center;
+            background: var(--card); border-radius: var(--radius-sm);
+        }
+        .cal-hdr.today-col .ch-day { color: var(--red); }
+        .ch-dow { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); }
+        .ch-day { font-size: 19px; font-weight: 900; line-height: 1.2; margin-top: 1px; }
+        .ch-mon { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+
+        .cal-tlbl {
+            font-size: 10px; color: var(--muted); padding-right: 6px;
+            display: flex; align-items: center; justify-content: flex-end; white-space: nowrap;
+        }
+
+        .cal-cell {
+            background: var(--card); border-radius: 5px; padding: 3px 4px;
+            min-height: 36px; border-left: 3px solid transparent; overflow: hidden;
+        }
+        .cal-cell.ch-c  { border-left-color: var(--blue); }
+        .cal-cell.ch-m  { border-left-color: var(--orange); }
+        .cal-cell.ch-b  { border-left-color: var(--red); }
+        .cal-cell.cur-h { background: var(--hover); }
+
+        .bk-chip {
+            padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            cursor: pointer; display: block; margin-bottom: 2px;
+            transition: opacity .14s; max-width: 100%;
+        }
+        .bk-chip:hover { opacity: .7; }
+        .bk-chip.c { background: var(--blue-dim); color: var(--blue); }
+        .bk-chip.m { background: var(--orange-dim); color: var(--orange); }
+
+        /* ═════════════════════ MODAL ═════════════════════ */
+        .modal-ov {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,.7); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center;
+            z-index: 200; padding: 20px;
+        }
+        .modal-ov.open { display: flex; }
+
+        .modal {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 18px; padding: 28px; max-width: 350px; width: 100%;
+            box-shadow: var(--shadow); animation: popIn .2s ease;
+        }
+        @keyframes popIn {
+            from { transform: scale(.94) translateY(16px); opacity: 0; }
+            to   { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .modal h3 { font-size: 15px; font-weight: 800; color: var(--red); margin-bottom: 18px; display: flex; align-items: center; gap: 7px; }
+        .mrow {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+        }
+        .mrow:last-of-type { border-bottom: none; }
+        .mlbl { color: var(--muted); min-width: 75px; flex-shrink: 0; }
+        .mval { font-weight: 700; word-break: break-word; }
+        .modal-acts { display: flex; gap: 8px; margin-top: 20px; }
+        .modal-acts .btn { flex: 1; }
+
+        /* ═════════════════════ GCAL ═════════════════════ */
+        .btn-gcal-connected { border-color: var(--green) !important; color: var(--green) !important; }
+        .gcal-step {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 12px 14px;
+            margin-bottom: 7px; font-size: 12.5px; line-height: 1.6;
+        }
+        .gcal-step a { color: var(--blue); }
+        .gcal-step strong { color: var(--text); }
+        .gcal-step code {
+            background: var(--bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 5px;
+            font-size: 11px; color: var(--blue); word-break: break-all;
+        }
+        .gcal-warn {
+            background: var(--orange-dim); border: 1px solid rgba(251,146,60,.3);
+            border-radius: var(--radius-sm); padding: 10px 14px;
+            font-size: 12px; color: var(--orange); margin-bottom: 14px; line-height: 1.5;
+        }
+        .gcal-ok { text-align: center; padding: 16px 0 12px; }
+        .gcal-ok .go-ico { font-size: 44px; display: block; margin-bottom: 10px; }
+        .gcal-ok p { color: var(--green); font-weight: 700; font-size: 14px; }
+        .gcal-ok small { color: var(--muted); font-size: 11.5px; line-height: 1.5; display: block; margin-top: 4px; }
+        details summary { list-style: none; cursor: pointer; }
+        details summary::-webkit-details-marker { display: none; }
+
+        /* ═════════════════════ BOTTOM NAV ═════════════════════ */
+        .bottom-nav {
+            display: none;
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            z-index: 100;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        .bottom-nav-inner { display: flex; }
+        .bn-item {
+            flex: 1; position: relative;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 3px;
+            padding: 9px 0 12px;
+            background: none; border: none;
+            color: var(--muted); font-family: inherit;
+            font-size: 10px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .8px;
+            cursor: pointer; transition: color .15s;
+        }
+        .bn-item.act { color: var(--red); }
+        .bn-item.act .bn-ico { filter: drop-shadow(0 0 6px rgba(232,69,96,.55)); }
+        .bn-ico { font-size: 22px; line-height: 1; }
+
+        @keyframes slideUp {
+            from { transform: translateY(50%); opacity: 0; }
+            to   { transform: translateY(0); opacity: 1; }
+        }
+
+        /* ═════════════════════ RESPONSIVE ═════════════════════ */
+        @media (max-width: 860px) {
+            body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
+
+            .main-grid {
+                grid-template-columns: 1fr;
+                max-height: none; overflow: visible;
+            }
+            .panel-left  { border-right: none; overflow-y: visible; }
+            .panel-right { overflow-y: visible; }
+
+            /* panel switching via JS */
+            .panel-left.panel-hidden,
+            .panel-right.panel-hidden { display: none; }
+
+            /* show bottom nav */
+            .bottom-nav { display: block; }
+
+            /* topbar: hide date, compact */
+            .tb-date { display: none; }
+            .topbar { height: 52px; padding: 0 16px; }
+            .tb-brand { font-size: 14px; letter-spacing: 2px; }
+
+            /* prevent iOS auto-zoom on input focus */
+            input[type="text"],
+            input[type="password"],
+            input[type="date"] { font-size: 16px !important; padding: 13px 14px; }
+
+            /* zone cards: bigger touch area */
+            .zone-card { padding: 20px 8px 16px; }
+            .z-ico { font-size: 32px; }
+            .z-nm { font-size: 13px; }
+            .z-st { font-size: 11px; }
+
+            /* slot grid 3 cols – larger tap targets */
+            .slot-grid { grid-template-columns: repeat(3, 1fr); gap: 7px; }
+            .slot-btn { padding: 15px 4px; font-size: 13px; min-height: 50px; }
+
+            /* confirm button */
+            .btn-primary.btn-full { padding: 16px; font-size: 15px; min-height: 54px; }
+
+            /* today list */
+            .mini-bk { padding: 14px 14px; }
+            .mb-tm { font-size: 14px; }
+            .mb-dt { font-size: 12px; }
+            .mb-ico { font-size: 22px; }
+
+            /* view tabs */
+            .view-tabs { gap: 6px; }
+            .v-tab { flex: 1; text-align: center; padding: 12px 6px; font-size: 12px; }
+
+            /* range row stacks vertically */
+            .range-row { flex-direction: column; gap: 8px; }
+            .range-row input { width: 100%; min-width: 0; }
+            .range-row .btn { width: 100%; }
+
+            /* legend */
+            .leg-item { font-size: 12px; }
+
+            /* calendar */
+            .bk-chip { font-size: 11px; padding: 3px 6px; }
+            .cal-tlbl { font-size: 11px; }
+            .ch-day { font-size: 17px; }
+            .cal-cell { min-height: 40px; }
+
+            /* panel padding */
+            .panel-left, .panel-right { padding: 16px 14px 20px; }
+        }
+
+        @media (max-width: 480px) {
+            .login-card { padding: 32px 20px 28px; }
+            .brand-icon { width: 64px; height: 64px; font-size: 28px; }
+            .brand-name { font-size: 24px; }
+
+            /* slot grid 2 cols on very small screens */
+            .slot-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .slot-btn { padding: 16px 4px; font-size: 14px; }
+
+            /* modal as bottom sheet */
+            .modal-ov { align-items: flex-end; padding: 0; }
+            .modal {
+                border-radius: 22px 22px 0 0;
+                max-width: 100%; width: 100%;
+                padding: 28px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+                animation: slideUp .25s ease;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div id="loginScreen">
+    <div class="login-wrap">
+        <div class="login-card">
+            <div class="login-brand">
+                <div class="brand-icon">🏋️</div>
+                <div class="brand-name">MD<em>.</em>STUDIO</div>
+                <div class="brand-sub">Fitness Studio · Gestão de Reservas</div>
+            </div>
+            <div class="fg">
+                <label for="iUser">Utilizador</label>
+                <input type="text" id="iUser" placeholder="" autocomplete="off">
+            </div>
+            <div class="fg">
+                <label for="iPass">Password</label>
+                <input type="password" id="iPass" placeholder="••••••••••">
+            </div>
+            <button class="btn btn-primary btn-full" onclick="doLogin()">Entrar no Sistema</button>
+            <div class="login-err" id="loginErr">❌ &nbsp;Credenciais incorretas. Tente novamente.</div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ APP ══════════════ -->
+<div id="app">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+        <div class="tb-brand">
+            <div class="tb-icon">🏋️</div>
+            MD<em>.</em>STUDIO
+        </div>
+        <div class="tb-right">
+            <span class="tb-date" id="tbDate"></span>
+            <button class="btn btn-ghost btn-sm" id="gcalBtn" onclick="gcalOpenSettings()" title="Ligar ao Google Calendar">📅</button>
+            <button class="btn btn-ghost btn-sm" onclick="logout()">↩ &nbsp;Sair</button>
+        </div>
+    </header>
+
+    <!-- TWO-PANEL GRID -->
+    <div class="main-grid">
+
+        <!-- ─── PANEL LEFT : BOOKING FORM ─── -->
+        <div class="panel-left" id="panelLeft">
+
+            <div class="pt">
+                <div class="pt-icon red">📅</div>
+                <div>
+                    <h2>Nova Reserva</h2>
+                </div>
+            </div>
+
+            <div class="fg">
+                <label for="bDate">Data</label>
+                <input type="date" id="bDate" onchange="onDateChange()">
+            </div>
+
+            <div class="fg">
+                <div class="sec-lbl">Zona</div>
+                <div class="zone-grid">
+                    <div>
+                        <input type="radio" name="zone" id="zC" value="cardio" class="zone-radio" onchange="onZoneChange()">
+                        <label for="zC" class="zone-card">
+                            <span class="z-ico">🏃</span>
+                            <span class="z-nm">Cardio</span>
+                            <span class="z-st" id="stCardio">Carregando…</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" name="zone" id="zM" value="musculação" class="zone-radio" onchange="onZoneChange()">
+                        <label for="zM" class="zone-card">
+                            <span class="z-ico">💪</span>
+                            <span class="z-nm">Musculação</span>
+                            <span class="z-st" id="stMuscle">Carregando…</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fg">
+                <div class="sec-lbl">Horário (selecione um bloco)</div>
+                <div class="slot-grid" id="slotGrid"></div>
+            </div>
+
+            <div class="fg">
+                <label for="bName">Nome / Habitação</label>
+                <input type="text" id="bName" placeholder="Ex: João Silva · Hab. 3A" autocomplete="off">
+            </div>
+
+            <button class="btn btn-primary btn-full" onclick="submitBooking()">✓ &nbsp;Confirmar Reserva</button>
+            <div class="alert" id="bookMsg"></div>
+
+            <hr class="div">
+
+            <div class="sec-lbl">📋 Reservas de Hoje</div>
+            <div id="todayList"></div>
+
+        </div>
+
+        <!-- ─── PANEL RIGHT : CALENDAR ─── -->
+        <div class="panel-right panel-hidden" id="panelRight">
+
+            <div class="pt">
+                <div class="pt-icon blue">📆</div>
+                <div>
+                    <h2>Calendário de Reservas</h2>
+                    <p>Clique numa reserva para ver detalhes ou cancelar</p>
+                </div>
+            </div>
+
+            <!-- View tabs -->
+            <div class="view-tabs">
+                <button class="v-tab act" id="tabToday"  onclick="switchView('today')">Hoje</button>
+                <button class="v-tab"     id="tabWeek"   onclick="switchView('week')">7 Dias</button>
+                <button class="v-tab"     id="tabCustom" onclick="switchView('custom')">Intervalo</button>
+            </div>
+
+            <!-- Custom range -->
+            <div class="range-row" id="rangeRow">
+                <input type="date" id="rStart">
+                <span class="range-sep">até</span>
+                <input type="date" id="rEnd">
+                <button class="btn btn-primary btn-sm" onclick="applyRange()">Aplicar</button>
+            </div>
+
+            <!-- Legend -->
+            <div class="legend">
+                <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div>Cardio</div>
+                <div class="leg-item"><div class="leg-dot" style="background:var(--orange)"></div>Musculação</div>
+                <div class="leg-item"><div class="leg-dot" style="background:var(--card);outline:1px solid var(--border);border-radius:50%;"></div>Livre</div>
+            </div>
+
+            <!-- Calendar output -->
+            <div class="cal-wrap">
+                <div id="calGrid"></div>
+            </div>
+
+        </div>
+
+    </div><!-- /main-grid -->
+
+    <!-- ─── BOTTOM NAV (mobile only) ─── -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-inner">
+            <button class="bn-item act" id="bnReservar" onclick="switchPanel('left')">
+                <span class="bn-ico">📅</span>
+                Reservar
+            </button>
+            <button class="bn-item" id="bnCalendario" onclick="switchPanel('right')">
+                <span class="bn-ico">📆</span>
+                Calendário
+            </button>
+        </div>
+    </nav>
+
+</div><!-- /app -->
+
+<!-- ══════════════ GCAL MODAL ══════════════ -->
+<div class="modal-ov" id="gcalOv" onclick="gcalOvClick(event)">
+    <div class="modal" style="max-width:430px;max-height:88vh;overflow-y:auto">
+        <h3>📅 Google Calendar</h3>
+
+        <!-- CONNECTED -->
+        <div id="gcalConnectedView" style="display:none">
+            <div class="gcal-ok">
+                <span class="go-ico">✅</span>
+                <p>Ligado ao Google Calendar!</p>
+                <small>As novas reservas são sincronizadas automaticamente.<br>As reservas canceladas serão também removidas do calendário.</small>
+            </div>
+            <div class="modal-acts" style="margin-top:8px">
+                <button class="btn btn-danger" onclick="gcalDisconnect()">🔌 &nbsp;Desligar</button>
+                <button class="btn btn-ghost"  onclick="gcalCloseSettings()">Fechar</button>
+            </div>
+        </div>
+
+        <!-- SETUP -->
+        <div id="gcalSetupView">
+            <div class="gcal-warn">
+                ⚠️ A app deve ser acedida via <strong>http://</strong> (servidor local ou web hosting). A integração <strong>não funciona</strong> com <code>file://</code>.
+            </div>
+
+            <details style="margin-bottom:14px">
+                <summary style="color:var(--blue);font-size:12.5px;font-weight:700;padding:4px 0;user-select:none">
+                    ℹ️ Como configurar — passo a passo ▸
+                </summary>
+                <div style="margin-top:10px">
+                    <div class="gcal-step"><strong>1.</strong> Aceda a <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a> e crie (ou selecione) um projeto.</div>
+                    <div class="gcal-step"><strong>2.</strong> Vá a <em>APIs e Serviços → Biblioteca</em> e ative a <strong>Google Calendar API</strong>.</div>
+                    <div class="gcal-step"><strong>3.</strong> Vá a <em>APIs e Serviços → Credenciais</em> → <em>Criar credenciais</em> → <strong>ID do cliente OAuth 2.0</strong> → tipo <strong>Aplicação Web</strong>.</div>
+                    <div class="gcal-step"><strong>4.</strong> Em <em>Origens JavaScript autorizadas</em> adicione o URL onde a app está a ser servida (ex: <code>http://localhost:3000</code> ou o seu domínio).</div>
+                    <div class="gcal-step"><strong>5.</strong> Copie o <strong>ID do cliente</strong> gerado e cole no campo abaixo.</div>
+                </div>
+            </details>
+
+            <div class="fg">
+                <label for="gcalClientIdInput">ID do Cliente OAuth 2.0</label>
+                <input type="text" id="gcalClientIdInput" placeholder="xxxxxxxxxx.apps.googleusercontent.com" autocomplete="off">
+            </div>
+            <div class="modal-acts">
+                <button class="btn btn-primary" id="gcalSaveBtn" onclick="gcalSaveAndConnect()">🔗 &nbsp;Ligar ao Calendar</button>
+                <button class="btn btn-ghost"   onclick="gcalCloseSettings()">Cancelar</button>
+            </div>
+            <div class="alert" id="gcalAlert" style="margin-top:10px;display:none"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ MODAL ══════════════ -->
+<div class="modal-ov" id="mOv" onclick="onOvClick(event)">
+    <div class="modal">
+        <h3>📋 Detalhes da Reserva</h3>
+        <div class="mrow"><span class="mlbl">📅 Data</span>     <span class="mval" id="mDate">—</span></div>
+        <div class="mrow"><span class="mlbl">⏰ Horário</span>  <span class="mval" id="mTime">—</span></div>
+        <div class="mrow"><span class="mlbl">🏋️ Zona</span>     <span class="mval" id="mZone">—</span></div>
+        <div class="mrow"><span class="mlbl">👤 Nome</span>     <span class="mval" id="mName">—</span></div>
+        <div class="modal-acts">
+            <button class="btn btn-danger" onclick="delActiveBk()">🗑️ &nbsp;Cancelar Reserva</button>
+            <button class="btn btn-ghost"  onclick="closeModal()">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+'use strict';
+
+/* ══════════ CONSTANTS & STATE ══════════ */
+const HS = 7, HE = 21;            // studio hours
+const ZC = 'cardio';
+const ZM = 'musculação';
+const SK = 'mdstudio_v2';
+
+let bookings = loadData();
+let view     = 'today';
+let selH     = null;              // selected hour in booking form
+let activeId = null;              // booking open in modal
+let rangeS   = null, rangeE = null;
+
+/* ══════════ DATA HELPERS ══════════ */
+function loadData() {
+    try { return JSON.parse(localStorage.getItem(SK) || '[]'); }
+    catch { return []; }
+}
+function saveData() { localStorage.setItem(SK, JSON.stringify(bookings)); }
+
+const DOW_LONG  = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+const DOW_SHORT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const MON_LONG  = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const MON_SH    = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+function todayStr() { return fmtD(new Date()); }
+function fmtD(d) {
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function pad(n) { return String(n).padStart(2,'0'); }
+function parseD(s) { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+function fmtH(h) { return `${pad(h)}:00`; }
+function addD(s, n) { const d=parseD(s); d.setDate(d.getDate()+n); return fmtD(d); }
+function dateBetween(s, e) {
+    const r=[]; let c=s;
+    while(c<=e){ r.push(c); c=addD(c,1); }
+    return r;
+}
+function fmtDateLong(s) {
+    const d=parseD(s);
+    return `${DOW_LONG[d.getDay()]}, ${d.getDate()} de ${MON_LONG[d.getMonth()]}`;
+}
+function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function genId() { return `bk_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`; }
+
+/* ══════════ LOGIN / LOGOUT ══════════ */
+function doLogin() {
+    const u=document.getElementById('iUser').value.trim();
+    const p=document.getElementById('iPass').value;
+    const errEl=document.getElementById('loginErr');
+    if(u==='mduser' && p==='adopthouse') {
+        document.getElementById('loginScreen').style.display='none';
+        document.getElementById('app').style.display='flex';
+        initApp();
+    } else {
+        errEl.style.display='block';
+        document.getElementById('iPass').value='';
+        setTimeout(()=>errEl.style.display='none', 3500);
+    }
+}
+function logout() {
+    if(!confirm('Tem a certeza que pretende sair?')) return;
+    document.getElementById('loginScreen').style.display='flex';
+    document.getElementById('app').style.display='none';
+    document.getElementById('iUser').value='';
+    document.getElementById('iPass').value='';
+}
+document.addEventListener('keydown', e=>{
+    if(e.key==='Enter' && document.getElementById('loginScreen').style.display!=='none') doLogin();
+});
+document.getElementById('bName')?.addEventListener('keydown', e=>{
+    if(e.key==='Enter') submitBooking();
+});
+
+/* ══════════ INIT ══════════ */
+function initApp() {
+    const now=new Date();
+    document.getElementById('tbDate').textContent=
+        `${DOW_LONG[now.getDay()]}, ${now.getDate()} de ${MON_LONG[now.getMonth()]} de ${now.getFullYear()}`;
+
+    const bd=document.getElementById('bDate');
+    bd.value=todayStr(); bd.min=todayStr(); bd.max=addD(todayStr(),30);
+
+    document.getElementById('rStart').value=todayStr();
+    document.getElementById('rEnd').value=addD(todayStr(),6);
+
+    buildSlotGrid();
+    renderCalendar();
+    renderTodayList();
+    updateZoneSt();
+    gcalLoad();
+}
+
+/* ══════════ BOOKING FORM ══════════ */
+function getZone() { return document.querySelector('input[name="zone"]:checked')?.value||null; }
+
+function onDateChange() { selH=null; buildSlotGrid(); updateZoneSt(); }
+function onZoneChange() { selH=null; buildSlotGrid(); }
+
+function updateZoneSt() {
+    const date=document.getElementById('bDate').value;
+    if(!date) return;
+    const db=bookings.filter(b=>b.date===date);
+    let cf=0,mf=0;
+    for(let h=HS;h<HE;h++){
+        const sb=db.filter(b=>b.hour===h);
+        if(!sb.some(b=>b.zone===ZC)) cf++;
+        if(!sb.some(b=>b.zone===ZM)) mf++;
+    }
+    const slots=HE-HS;
+    document.getElementById('stCardio').textContent=
+        cf===slots ? '— todos livres —' : cf===0 ? '— sem disponibilidade —' : `${cf} slot${cf!==1?'s':''} livre${cf!==1?'s':''}`;
+    document.getElementById('stMuscle').textContent=
+        mf===slots ? '— todos livres —' : mf===0 ? '— sem disponibilidade —' : `${mf} slot${mf!==1?'s':''} livre${mf!==1?'s':''}`;
+}
+
+function buildSlotGrid() {
+    const grid=document.getElementById('slotGrid');
+    const date=document.getElementById('bDate').value;
+    const zone=getZone();
+    const isToday=date===todayStr();
+    const curH=new Date().getHours();
+    grid.innerHTML='';
+
+    for(let h=HS;h<HE;h++) {
+        const btn=document.createElement('button');
+        btn.type='button'; btn.className='slot-btn';
+        btn.textContent=fmtH(h);
+
+        const sb=bookings.filter(b=>b.date===date&&b.hour===h);
+        const cT=sb.some(b=>b.zone===ZC);
+        const mT=sb.some(b=>b.zone===ZM);
+        const full=cT&&mT;
+        const past=isToday && h<curH;
+
+        if(past) {
+            btn.classList.add('past'); btn.disabled=true;
+            btn.title='Horário já passou';
+        } else if(full) {
+            btn.classList.add('full'); btn.disabled=true;
+            btn.title='Slot completo (Cardio + Musculação)';
+        } else if(zone && ((zone===ZC&&cT)||(zone===ZM&&mT))) {
+            btn.classList.add('zone-taken'); btn.disabled=true;
+            btn.title='Esta zona já está reservada neste horário';
+        } else {
+            btn.addEventListener('click', ()=>{
+                if(selH===h){ selH=null; btn.classList.remove('sel'); }
+                else {
+                    selH=h;
+                    grid.querySelectorAll('.slot-btn').forEach(b=>b.classList.remove('sel'));
+                    btn.classList.add('sel');
+                }
+            });
+            if(selH===h) btn.classList.add('sel');
+        }
+        grid.appendChild(btn);
+    }
+}
+
+function submitBooking() {
+    const date=document.getElementById('bDate').value;
+    const zone=getZone();
+    const name=document.getElementById('bName').value.trim();
+
+    if(!date)      { showMsg('err','Por favor, selecione uma data.'); return; }
+    if(!zone)      { showMsg('err','Por favor, selecione uma zona (Cardio ou Musculação).'); return; }
+    if(selH===null){ showMsg('err','Por favor, selecione um horário disponível.'); return; }
+    if(!name)      { showMsg('err','Por favor, introduza o nome ou habitação.'); return; }
+
+    const sb=bookings.filter(b=>b.date===date&&b.hour===selH);
+    if(sb.some(b=>b.zone===zone)){
+        showMsg('err',`A zona de ${zone==='cardio'?'Cardio':'Musculação'} já está reservada neste horário.`); return;
+    }
+    if(sb.length>=2){ showMsg('err','Este horário já está com lotação máxima (2 ocupantes).'); return; }
+
+    const bk={id:genId(), date, hour:selH, zone, name, gcalEventId:null, createdAt:new Date().toISOString()};
+    bookings.push(bk);
+    saveData();
+
+    // Async: create Google Calendar event and store the event ID
+    gcalCreateEvent(bk).then(evId => {
+        if (evId) {
+            const idx = bookings.findIndex(b => b.id === bk.id);
+            if (idx !== -1) { bookings[idx].gcalEventId = evId; saveData(); }
+        }
+    });
+
+    // reset form
+    selH=null;
+    document.getElementById('bName').value='';
+    document.querySelectorAll('input[name="zone"]').forEach(r=>r.checked=false);
+    buildSlotGrid();
+    renderCalendar();
+    renderTodayList();
+    updateZoneSt();
+
+    const zLbl=zone===ZC?'🏃 Cardio':'💪 Musculação';
+    showMsg('ok',`✓ Reserva confirmada!  ${fmtH(bk.hour)}–${fmtH(bk.hour+1)} · ${zLbl} · ${bk.name}`);
+}
+
+function showMsg(type, txt) {
+    const el=document.getElementById('bookMsg');
+    el.className=`alert ${type}`; el.textContent=txt;
+    clearTimeout(el._t);
+    el._t=setTimeout(()=>{ el.className='alert'; el.textContent=''; },5500);
+}
+
+/* ══════════ TODAY LIST ══════════ */
+function renderTodayList() {
+    const el=document.getElementById('todayList');
+    const t=todayStr();
+    const curH=new Date().getHours();
+    const list=bookings.filter(b=>b.date===t && b.hour>=curH).sort((a,b)=>a.hour-b.hour);
+    if(!list.length){ el.innerHTML='<div class="empty">Sem reservas para hoje</div>'; return; }
+    el.innerHTML=list.map(b=>`
+        <div class="mini-bk" onclick="openModal('${b.id}')">
+            <span class="mb-ico">${b.zone===ZC?'🏃':'💪'}</span>
+            <div style="flex:1;min-width:0">
+                <div class="mb-tm">${fmtH(b.hour)} – ${fmtH(b.hour+1)}</div>
+                <div class="mb-dt">${esc(b.name)} · ${b.zone===ZC?'Cardio':'Musculação'}</div>
+            </div>
+            <span style="color:var(--muted);font-size:15px">›</span>
+        </div>`).join('');
+}
+
+/* ══════════ CALENDAR ══════════ */
+function switchView(v) {
+    view=v;
+    document.querySelectorAll('.v-tab').forEach(t=>t.classList.remove('act'));
+    document.getElementById(`tab${v.charAt(0).toUpperCase()+v.slice(1)}`).classList.add('act');
+    document.getElementById('rangeRow').classList.toggle('show', v==='custom');
+    if(v!=='custom') renderCalendar();
+}
+
+function applyRange() {
+    const s=document.getElementById('rStart').value;
+    const e=document.getElementById('rEnd').value;
+    if(!s||!e||s>e){ alert('Intervalo de datas inválido.'); return; }
+    if(dateBetween(s,e).length>31){ alert('O intervalo máximo é de 31 dias.'); return; }
+    rangeS=s; rangeE=e;
+    renderCalendar();
+}
+
+function getViewDays() {
+    const t=todayStr();
+    if(view==='today') return [t];
+    if(view==='week')  return Array.from({length:7},(_,i)=>addD(t,i));
+    if(view==='custom'&&rangeS&&rangeE) return dateBetween(rangeS,rangeE);
+    return [t];
+}
+
+function renderCalendar() {
+    const days=getViewDays();
+    const t=todayStr();
+    const curH=new Date().getHours();
+    const n=days.length;
+    const cols=`44px repeat(${n},1fr)`;
+
+    let h=`<div class="cal-grid" style="display:grid;grid-template-columns:${cols};gap:4px;">`;
+
+    // header row
+    h+=`<div></div>`;
+    days.forEach(d=>{
+        const dt=parseD(d); const isT=d===t;
+        h+=`<div class="cal-hdr${isT?' today-col':''}">
+            <div class="ch-dow">${DOW_SHORT[dt.getDay()]}</div>
+            <div class="ch-day">${dt.getDate()}</div>
+            <div class="ch-mon">${MON_SH[dt.getMonth()]}</div>
+        </div>`;
+    });
+
+    // hour rows
+    for(let hr=HS;hr<HE;hr++) {
+        h+=`<div class="cal-tlbl">${fmtH(hr)}</div>`;
+        days.forEach(d=>{
+            const sb=bookings.filter(b=>b.date===d&&b.hour===hr);
+            const hC=sb.some(b=>b.zone===ZC);
+            const hM=sb.some(b=>b.zone===ZM);
+            const isCH=d===t&&hr===curH;
+            let bc='';
+            if(hC&&hM) bc='ch-b'; else if(hC) bc='ch-c'; else if(hM) bc='ch-m';
+            h+=`<div class="cal-cell ${bc}${isCH?' cur-h':''}">`;
+            sb.forEach(b=>{
+                const cls=b.zone===ZC?'c':'m';
+                const ico=b.zone===ZC?'🏃':'💪';
+                const nm=b.name.length>13?b.name.slice(0,11)+'…':b.name;
+                h+=`<span class="bk-chip ${cls}" onclick="openModal('${b.id}')" title="${esc(b.name)} · ${b.zone} · ${fmtH(hr)}–${fmtH(hr+1)}">${ico} ${esc(nm)}</span>`;
+            });
+            h+=`</div>`;
+        });
+    }
+
+    h+=`</div>`;
+    document.getElementById('calGrid').innerHTML=h;
+}
+
+/* ══════════ MODAL ══════════ */
+function openModal(id) {
+    const b=bookings.find(bk=>bk.id===id);
+    if(!b) return;
+    activeId=id;
+    document.getElementById('mDate').textContent=fmtDateLong(b.date);
+    document.getElementById('mTime').textContent=`${fmtH(b.hour)} – ${fmtH(b.hour+1)}`;
+    document.getElementById('mZone').textContent=b.zone===ZC?'🏃 Cardio':'💪 Musculação';
+    document.getElementById('mName').textContent=b.name;
+    document.getElementById('mOv').classList.add('open');
+}
+function closeModal() { document.getElementById('mOv').classList.remove('open'); activeId=null; }
+function onOvClick(e) { if(e.target===document.getElementById('mOv')) closeModal(); }
+
+function delActiveBk() {
+    if(!activeId) return;
+    if(!confirm('Tem a certeza que pretende cancelar esta reserva?')) return;
+    const bkToDel = bookings.find(b => b.id === activeId);
+    if (bkToDel?.gcalEventId) gcalDeleteEvent(bkToDel.gcalEventId);
+    bookings=bookings.filter(b=>b.id!==activeId);
+    saveData();
+    closeModal();
+    buildSlotGrid();
+    renderCalendar();
+    renderTodayList();
+    updateZoneSt();
+}
+
+// Also wire up Enter on login password field
+document.getElementById('iPass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+// Wire Enter on booking name
+document.addEventListener('DOMContentLoaded', ()=>{
+    document.getElementById('bName')?.addEventListener('keydown', e=>{ if(e.key==='Enter') submitBooking(); });
+});
+
+/* ══════════ MOBILE PANEL SWITCHER ══════════ */
+function switchPanel(p) {
+    const pL=document.getElementById('panelLeft');
+    const pR=document.getElementById('panelRight');
+    const bL=document.getElementById('bnReservar');
+    const bR=document.getElementById('bnCalendario');
+    if(p==='left') {
+        pL.classList.remove('panel-hidden');
+        pR.classList.add('panel-hidden');
+        bL.classList.add('act');
+        bR.classList.remove('act');
+        window.scrollTo({top:0, behavior:'smooth'});
+    } else {
+        pL.classList.add('panel-hidden');
+        pR.classList.remove('panel-hidden');
+        bL.classList.remove('act');
+        bR.classList.add('act');
+        renderCalendar();
+        window.scrollTo({top:0, behavior:'smooth'});
+    }
+}
+
+/* ══════════ GOOGLE CALENDAR ══════════ */
+const GCAL_SK    = 'mdstudio_gcal';
+const GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
+let tokenClient  = null;
+let gapiReady    = false;
+let gisReady     = false;
+let gcalEnabled  = false;
+
+function gcalCfg() {
+    try { return JSON.parse(localStorage.getItem(GCAL_SK) || '{}'); } catch { return {}; }
+}
+function gcalSaveCfg(obj) { localStorage.setItem(GCAL_SK, JSON.stringify(obj)); }
+
+function gcalLoad() {
+    const cfg = gcalCfg();
+    if (!cfg.clientId) return;
+    gcalLoadLibs(cfg.clientId);
+}
+
+function gcalLoadLibs(clientId) {
+    if (!document.getElementById('gapiJs')) {
+        const s = document.createElement('script');
+        s.id = 'gapiJs'; s.src = 'https://apis.google.com/js/api.js';
+        s.onload = () => {
+            gapi.load('client', async () => {
+                await gapi.client.init({});
+                await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest');
+                gapiReady = true;
+                gcalMaybeInit(clientId);
+            });
+        };
+        document.head.appendChild(s);
+    }
+    if (!document.getElementById('gisJs')) {
+        const s = document.createElement('script');
+        s.id = 'gisJs'; s.src = 'https://accounts.google.com/gsi/client';
+        s.onload = () => { gisReady = true; gcalMaybeInit(clientId); };
+        document.head.appendChild(s);
+    }
+}
+
+function gcalMaybeInit(clientId) {
+    if (!gapiReady || !gisReady) return;
+    tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: GCAL_SCOPE,
+        callback: (resp) => {
+            if (resp.error) { gcalShowAlert('err', '❌ Erro de autorização: ' + resp.error); return; }
+            gcalEnabled = true;
+            gapi.client.setToken({ access_token: resp.access_token });
+            gcalSaveCfg({ ...gcalCfg(), token: resp.access_token });
+            updateGcalBtn();
+            gcalCloseSettings();
+            showMsg('ok', '✅ Google Calendar ligado! As próximas reservas serão sincronizadas.');
+        }
+    });
+    const cfg = gcalCfg();
+    if (cfg.token) {
+        gapi.client.setToken({ access_token: cfg.token });
+        gcalEnabled = true;
+        updateGcalBtn();
+    }
+}
+
+function updateGcalBtn() {
+    const btn = document.getElementById('gcalBtn');
+    if (!btn) return;
+    btn.classList.toggle('btn-gcal-connected', gcalEnabled);
+    btn.title = gcalEnabled ? '✓ Google Calendar ligado' : 'Ligar ao Google Calendar';
+    btn.innerHTML = gcalEnabled ? '📅 ✓' : '📅';
+}
+
+function gcalOpenSettings() {
+    document.getElementById('gcalConnectedView').style.display = gcalEnabled ? 'block' : 'none';
+    document.getElementById('gcalSetupView').style.display     = gcalEnabled ? 'none'  : 'block';
+    const cfg = gcalCfg();
+    document.getElementById('gcalClientIdInput').value = cfg.clientId || '';
+    const al = document.getElementById('gcalAlert');
+    al.className = 'alert'; al.style.display = 'none'; al.textContent = '';
+    document.getElementById('gcalOv').classList.add('open');
+}
+function gcalCloseSettings() { document.getElementById('gcalOv').classList.remove('open'); }
+function gcalOvClick(e) { if (e.target === document.getElementById('gcalOv')) gcalCloseSettings(); }
+
+function gcalSaveAndConnect() {
+    const clientId = document.getElementById('gcalClientIdInput').value.trim();
+    if (!clientId) { gcalShowAlert('err', 'Por favor insira o Client ID.'); return; }
+    gcalSaveCfg({ clientId });
+
+    const btn = document.getElementById('gcalSaveBtn');
+    btn.innerHTML = '⏳ A carregar…'; btn.disabled = true;
+
+    gcalLoadLibs(clientId);
+
+    let attempts = 0;
+    const wait = setInterval(() => {
+        attempts++;
+        if (gapiReady && gisReady) {
+            clearInterval(wait);
+            btn.innerHTML = '🔗 &nbsp;Ligar ao Calendar'; btn.disabled = false;
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: clientId,
+                scope: GCAL_SCOPE,
+                callback: (resp) => {
+                    if (resp.error) { gcalShowAlert('err', '❌ Erro: ' + resp.error); return; }
+                    gcalEnabled = true;
+                    gapi.client.setToken({ access_token: resp.access_token });
+                    gcalSaveCfg({ clientId, token: resp.access_token });
+                    updateGcalBtn();
+                    gcalCloseSettings();
+                    showMsg('ok', '✅ Google Calendar ligado!');
+                }
+            });
+            tokenClient.requestAccessToken({ prompt: 'consent' });
+        } else if (attempts > 150) {
+            clearInterval(wait);
+            btn.innerHTML = '🔗 &nbsp;Ligar ao Calendar'; btn.disabled = false;
+            gcalShowAlert('err', 'Timeout ao carregar as bibliotecas Google. Verifique a ligação à internet.');
+        }
+    }, 200);
+}
+
+function gcalDisconnect() {
+    if (!confirm('Desligar o Google Calendar?\nAs reservas já criadas no calendário não serão removidas.')) return;
+    gcalEnabled = false;
+    const cfg = gcalCfg();
+    if (typeof google !== 'undefined' && google.accounts?.oauth2 && cfg.token) {
+        google.accounts.oauth2.revoke(cfg.token, () => {});
+    }
+    if (typeof gapi !== 'undefined') gapi.client?.setToken(null);
+    localStorage.removeItem(GCAL_SK);
+    updateGcalBtn();
+    gcalCloseSettings();
+}
+
+function gcalShowAlert(type, msg) {
+    const el = document.getElementById('gcalAlert');
+    el.className = `alert ${type}`; el.textContent = msg; el.style.display = 'block';
+}
+
+async function gcalCreateEvent(bk) {
+    if (!gcalEnabled || !gapiReady) return null;
+    const p2 = n => String(n).padStart(2, '0');
+    const event = {
+        summary:     `MD.Studio | ${bk.zone === ZC ? '🏃 Cardio' : '💪 Musculação'} — ${bk.name}`,
+        location:    'MD.Studio Fitness',
+        description: `Zona: ${bk.zone === ZC ? 'Cardio' : 'Musculação'}\nOcupante: ${bk.name}\n\nReservado via MD.Studio App`,
+        start: { dateTime: `${bk.date}T${p2(bk.hour)}:00:00`,     timeZone: 'Europe/Lisbon' },
+        end:   { dateTime: `${bk.date}T${p2(bk.hour + 1)}:00:00`, timeZone: 'Europe/Lisbon' },
+        colorId: bk.zone === ZC ? '7' : '6'  // Peacock (cardio) / Tangerine (musculação)
+    };
+    try {
+        const resp = await gapi.client.calendar.events.insert({ calendarId: 'primary', resource: event });
+        return resp.result.id;
+    } catch(e) {
+        if (e.status === 401) { gcalEnabled = false; updateGcalBtn(); }
+        console.warn('GCal createEvent failed:', e);
+        return null;
+    }
+}
+
+async function gcalDeleteEvent(eventId) {
+    if (!gcalEnabled || !gapiReady || !eventId) return;
+    try {
+        await gapi.client.calendar.events.delete({ calendarId: 'primary', eventId });
+    } catch(e) {
+        console.warn('GCal deleteEvent failed:', e);
+    }
+}
+</script>
+</body>
+</html>
