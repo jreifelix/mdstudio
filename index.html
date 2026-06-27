@@ -310,6 +310,7 @@
         .cal-cell.ch-m  { border-left-color: var(--orange); }
         .cal-cell.ch-b  { border-left-color: var(--red); }
         .cal-cell.cur-h { background: #eef4ff; }
+        .cal-cell.cal-closed { background: var(--bg); border-color: transparent; border-left-color: transparent; min-height: 38px; }
 
         .bk-chip {
             padding: 2px 7px; border-radius: 5px; font-size: 10.5px; font-weight: 600;
@@ -619,7 +620,13 @@
 'use strict';
 
 /* ══════════ CONSTANTS & STATE ══════════ */
-const HS = 7, HE = 21;            // studio hours
+const HS = 7;                      // studio open hour
+// weekdays (Mon–Fri) → last slot 21h–22h; weekends (Sat–Sun) → last slot 20h–21h
+function getHE(dateStr) {
+    if (!dateStr) return 21;
+    const dow = parseD(dateStr).getDay(); // 0=Sun, 6=Sat
+    return (dow === 0 || dow === 6) ? 21 : 22;
+}
 const ZC = 'cardio';
 const ZM = 'musculação';
 const SK = 'mdstudio_v2';
@@ -721,14 +728,15 @@ function onZoneChange() { selH=null; buildSlotGrid(); }
 function updateZoneSt() {
     const date=document.getElementById('bDate').value;
     if(!date) return;
+    const he=getHE(date);
     const db=bookings.filter(b=>b.date===date);
     let cf=0,mf=0;
-    for(let h=HS;h<HE;h++){
+    for(let h=HS;h<he;h++){
         const sb=db.filter(b=>b.hour===h);
         if(!sb.some(b=>b.zone===ZC)) cf++;
         if(!sb.some(b=>b.zone===ZM)) mf++;
     }
-    const slots=HE-HS;
+    const slots=he-HS;
     document.getElementById('stCardio').textContent=
         cf===slots ? '— todos livres —' : cf===0 ? '— sem disponibilidade —' : `${cf} slot${cf!==1?'s':''} livre${cf!==1?'s':''}`;
     document.getElementById('stMuscle').textContent=
@@ -741,9 +749,10 @@ function buildSlotGrid() {
     const zone=getZone();
     const isToday=date===todayStr();
     const curH=new Date().getHours();
+    const he=getHE(date);
     grid.innerHTML='';
 
-    for(let h=HS;h<HE;h++) {
+    for(let h=HS;h<he;h++) {
         const btn=document.createElement('button');
         btn.type='button'; btn.className='slot-btn';
         btn.textContent=fmtH(h);
@@ -882,10 +891,13 @@ function renderCalendar() {
         </div>`;
     });
 
-    // hour rows
-    for(let hr=HS;hr<HE;hr++) {
+    // hour rows — iterate up to max HE across all visible days
+    const maxHE = days.reduce((m, d) => Math.max(m, getHE(d)), HS);
+    for(let hr=HS;hr<maxHE;hr++) {
         h+=`<div class="cal-tlbl">${fmtH(hr)}</div>`;
         days.forEach(d=>{
+            const closed = hr >= getHE(d);
+            if(closed) { h+=`<div class="cal-cell cal-closed"></div>`; return; }
             const sb=bookings.filter(b=>b.date===d&&b.hour===hr);
             const hC=sb.some(b=>b.zone===ZC);
             const hM=sb.some(b=>b.zone===ZM);
