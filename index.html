@@ -1017,6 +1017,8 @@ function gcalLoad() {
     const sBtn = document.getElementById('syncBtn');
     if (sBtn) sBtn.style.display = 'inline-flex';
     gcalSyncFromCalendar(true);
+    // Auto-refresh every 30 seconds
+    setInterval(() => gcalSyncFromCalendar(true), 30000);
 }
 
 async function gcalSyncFromCalendar(silent = false) {
