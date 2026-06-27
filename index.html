@@ -1024,9 +1024,9 @@ async function gcalSyncFromCalendar(silent = false) {
     if (!gcalEnabled) return;
     const sBtn = document.getElementById('syncBtn');
     if (sBtn) { sBtn.textContent = '⏳'; sBtn.disabled = true; }
+
     try {
-        const resp = await fetch(`${AS_URL}?action=list`, { redirect: 'follow' });
-        const events = await resp.json();
+        const events = await gcalFetchJSONP();
         if (!Array.isArray(events)) throw new Error('resposta inválida');
         const parsed = events.map(gcalParseEvent).filter(Boolean);
         bookings = parsed;
@@ -1042,6 +1042,25 @@ async function gcalSyncFromCalendar(silent = false) {
     } finally {
         if (sBtn) { sBtn.textContent = '🔄'; sBtn.disabled = false; }
     }
+}
+
+function gcalFetchJSONP() {
+    return new Promise((resolve, reject) => {
+        const cb = '_gcb_' + Date.now();
+        const s  = document.createElement('script');
+        const timer = setTimeout(() => {
+            cleanup(); reject(new Error('timeout'));
+        }, 12000);
+        window[cb] = (data) => { cleanup(); resolve(data); };
+        s.onerror   = () => { cleanup(); reject(new Error('script error')); };
+        s.src = `${AS_URL}?action=list&callback=${cb}`;
+        function cleanup() {
+            clearTimeout(timer);
+            delete window[cb];
+            if (s.parentNode) s.parentNode.removeChild(s);
+        }
+        document.head.appendChild(s);
+    });
 }
 
 function gcalCreateEvent(bk) {
