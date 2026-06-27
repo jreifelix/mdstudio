@@ -521,7 +521,6 @@
         <div class="tb-right">
             <span class="tb-date" id="tbDate"></span>
             <button class="btn btn-ghost btn-sm" id="syncBtn" onclick="gcalSyncFromCalendar()" title="Sincronizar com Google Calendar" style="display:none">🔄</button>
-            <button class="btn btn-ghost btn-sm" id="gcalBtn" onclick="gcalOpenSettings()" title="Ligar ao Google Calendar">📅</button>
             <button class="btn btn-ghost btn-sm" onclick="logout()">↩ &nbsp;Sair</button>
         </div>
     </header>
@@ -643,57 +642,6 @@
     </nav>
 
 </div><!-- /app -->
-
-<!-- ══════════════ GCAL MODAL ══════════════ -->
-<div class="modal-ov" id="gcalOv" onclick="gcalOvClick(event)">
-    <div class="modal" style="max-width:430px;max-height:88vh;overflow-y:auto">
-        <h3>📅 Google Calendar</h3>
-
-        <!-- CONNECTED -->
-        <div id="gcalConnectedView" style="display:none">
-            <div class="gcal-ok">
-                <span class="go-ico">✅</span>
-                <p>Ligado ao Google Calendar!</p>
-                <small>As reservas são lidas e escritas diretamente no Google Calendar — todos os dispositivos ficam sincronizados automaticamente.</small>
-            </div>
-            <div class="modal-acts" style="margin-top:8px;flex-wrap:wrap;gap:7px">
-                <button class="btn btn-primary" onclick="gcalSyncNow()">🔄 &nbsp;Sincronizar agora</button>
-                <button class="btn btn-danger"  onclick="gcalDisconnect()">🔌 &nbsp;Desligar</button>
-                <button class="btn btn-ghost"   onclick="gcalCloseSettings()">Fechar</button>
-            </div>
-        </div>
-
-        <!-- SETUP -->
-        <div id="gcalSetupView">
-            <div class="gcal-warn">
-                ⚠️ A app deve ser acedida via <strong>http://</strong> (servidor local ou web hosting). A integração <strong>não funciona</strong> com <code>file://</code>.
-            </div>
-
-            <details style="margin-bottom:14px">
-                <summary style="color:var(--blue);font-size:12.5px;font-weight:700;padding:4px 0;user-select:none">
-                    ℹ️ Como configurar — passo a passo ▸
-                </summary>
-                <div style="margin-top:10px">
-                    <div class="gcal-step"><strong>1.</strong> Aceda a <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a> e crie (ou selecione) um projeto.</div>
-                    <div class="gcal-step"><strong>2.</strong> Vá a <em>APIs e Serviços → Biblioteca</em> e ative a <strong>Google Calendar API</strong>.</div>
-                    <div class="gcal-step"><strong>3.</strong> Vá a <em>APIs e Serviços → Credenciais</em> → <em>Criar credenciais</em> → <strong>ID do cliente OAuth 2.0</strong> → tipo <strong>Aplicação Web</strong>.</div>
-                    <div class="gcal-step"><strong>4.</strong> Em <em>Origens JavaScript autorizadas</em> adicione o URL onde a app está a ser servida (ex: <code>http://localhost:3000</code> ou o seu domínio).</div>
-                    <div class="gcal-step"><strong>5.</strong> Copie o <strong>ID do cliente</strong> gerado e cole no campo abaixo.</div>
-                </div>
-            </details>
-
-            <div class="fg">
-                <label for="gcalClientIdInput">ID do Cliente OAuth 2.0</label>
-                <input type="text" id="gcalClientIdInput" placeholder="xxxxxxxxxx.apps.googleusercontent.com" autocomplete="off">
-            </div>
-            <div class="modal-acts">
-                <button class="btn btn-primary" id="gcalSaveBtn" onclick="gcalSaveAndConnect()">🔗 &nbsp;Ligar ao Calendar</button>
-                <button class="btn btn-ghost"   onclick="gcalCloseSettings()">Cancelar</button>
-            </div>
-            <div class="alert" id="gcalAlert" style="margin-top:10px;display:none"></div>
-        </div>
-    </div>
-</div>
 
 <!-- ══════════════ MODAL ══════════════ -->
 <div class="modal-ov" id="mOv" onclick="onOvClick(event)">
@@ -1069,8 +1017,9 @@ function switchPanel(p) {
 }
 
 /* ══════════ GOOGLE CALENDAR ══════════ */
-const GCAL_SK    = 'mdstudio_gcal';
-const GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
+const GCAL_CLIENT_ID = '75802594514-7596dl1lfgln5thrmpl9msi0me68413i.apps.googleusercontent.com';
+const GCAL_SK        = 'mdstudio_gcal';
+const GCAL_SCOPE     = 'https://www.googleapis.com/auth/calendar.events';
 let tokenClient  = null;
 let gapiReady    = false;
 let gisReady     = false;
@@ -1082,9 +1031,7 @@ function gcalCfg() {
 function gcalSaveCfg(obj) { localStorage.setItem(GCAL_SK, JSON.stringify(obj)); }
 
 function gcalLoad() {
-    const cfg = gcalCfg();
-    if (!cfg.clientId) return;
-    gcalLoadLibs(cfg.clientId);
+    gcalLoadLibs(GCAL_CLIENT_ID);
 }
 
 function gcalLoadLibs(clientId) {
@@ -1115,12 +1062,11 @@ function gcalMaybeInit(clientId) {
         client_id: clientId,
         scope: GCAL_SCOPE,
         callback: (resp) => {
-            if (resp.error) { gcalShowAlert('err', '❌ Erro de autorização: ' + resp.error); return; }
+            if (resp.error) { showMsg('err', '❌ Erro Google Calendar: ' + resp.error); return; }
             gcalEnabled = true;
             gapi.client.setToken({ access_token: resp.access_token });
-            gcalSaveCfg({ ...gcalCfg(), token: resp.access_token });
-            updateGcalBtn();
-            gcalCloseSettings();
+            gcalSaveCfg({ token: resp.access_token });
+            updateSyncBtn();
             gcalSyncFromCalendar();
             showMsg('ok', '✅ Google Calendar ligado! A sincronizar reservas…');
         }
@@ -1129,89 +1075,17 @@ function gcalMaybeInit(clientId) {
     if (cfg.token) {
         gapi.client.setToken({ access_token: cfg.token });
         gcalEnabled = true;
-        updateGcalBtn();
+        updateSyncBtn();
         gcalSyncFromCalendar(true);
+    } else {
+        // First time — request authorization automatically
+        tokenClient.requestAccessToken({ prompt: 'consent' });
     }
 }
 
-function updateGcalBtn() {
-    const btn  = document.getElementById('gcalBtn');
+function updateSyncBtn() {
     const sBtn = document.getElementById('syncBtn');
-    if (btn) {
-        btn.classList.toggle('btn-gcal-connected', gcalEnabled);
-        btn.title   = gcalEnabled ? '✓ Google Calendar ligado' : 'Ligar ao Google Calendar';
-        btn.innerHTML = gcalEnabled ? '📅 ✓' : '📅';
-    }
     if (sBtn) sBtn.style.display = gcalEnabled ? 'inline-flex' : 'none';
-}
-
-function gcalOpenSettings() {
-    document.getElementById('gcalConnectedView').style.display = gcalEnabled ? 'block' : 'none';
-    document.getElementById('gcalSetupView').style.display     = gcalEnabled ? 'none'  : 'block';
-    const cfg = gcalCfg();
-    document.getElementById('gcalClientIdInput').value = cfg.clientId || '';
-    const al = document.getElementById('gcalAlert');
-    al.className = 'alert'; al.style.display = 'none'; al.textContent = '';
-    document.getElementById('gcalOv').classList.add('open');
-}
-function gcalCloseSettings() { document.getElementById('gcalOv').classList.remove('open'); }
-function gcalOvClick(e) { if (e.target === document.getElementById('gcalOv')) gcalCloseSettings(); }
-
-function gcalSaveAndConnect() {
-    const clientId = document.getElementById('gcalClientIdInput').value.trim();
-    if (!clientId) { gcalShowAlert('err', 'Por favor insira o Client ID.'); return; }
-    gcalSaveCfg({ clientId });
-
-    const btn = document.getElementById('gcalSaveBtn');
-    btn.innerHTML = '⏳ A carregar…'; btn.disabled = true;
-
-    gcalLoadLibs(clientId);
-
-    let attempts = 0;
-    const wait = setInterval(() => {
-        attempts++;
-        if (gapiReady && gisReady) {
-            clearInterval(wait);
-            btn.innerHTML = '🔗 &nbsp;Ligar ao Calendar'; btn.disabled = false;
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: clientId,
-                scope: GCAL_SCOPE,
-                callback: (resp) => {
-                    if (resp.error) { gcalShowAlert('err', '❌ Erro: ' + resp.error); return; }
-                    gcalEnabled = true;
-                    gapi.client.setToken({ access_token: resp.access_token });
-                    gcalSaveCfg({ clientId, token: resp.access_token });
-                    updateGcalBtn();
-                    gcalCloseSettings();
-                    gcalSyncFromCalendar();
-                    showMsg('ok', '✅ Google Calendar ligado! A sincronizar reservas…');
-                }
-            });
-            tokenClient.requestAccessToken({ prompt: 'consent' });
-        } else if (attempts > 150) {
-            clearInterval(wait);
-            btn.innerHTML = '🔗 &nbsp;Ligar ao Calendar'; btn.disabled = false;
-            gcalShowAlert('err', 'Timeout ao carregar as bibliotecas Google. Verifique a ligação à internet.');
-        }
-    }, 200);
-}
-
-function gcalDisconnect() {
-    if (!confirm('Desligar o Google Calendar?\nAs reservas já criadas no calendário não serão removidas.')) return;
-    gcalEnabled = false;
-    const cfg = gcalCfg();
-    if (typeof google !== 'undefined' && google.accounts?.oauth2 && cfg.token) {
-        google.accounts.oauth2.revoke(cfg.token, () => {});
-    }
-    if (typeof gapi !== 'undefined') gapi.client?.setToken(null);
-    localStorage.removeItem(GCAL_SK);
-    updateGcalBtn();
-    gcalCloseSettings();
-}
-
-function gcalShowAlert(type, msg) {
-    const el = document.getElementById('gcalAlert');
-    el.className = `alert ${type}`; el.textContent = msg; el.style.display = 'block';
 }
 
 async function gcalCreateEvent(bk) {
@@ -1302,12 +1176,6 @@ async function gcalSyncFromCalendar(silent = false) {
     renderTodayList();
     updateZoneSt();
     if (!silent) showMsg('ok', `🔄 Sincronizado! ${parsed.length} reserva${parsed.length !== 1 ? 's' : ''} encontrada${parsed.length !== 1 ? 's' : ''}.`);
-}
-
-/* ── Called from modal "Sincronizar agora" button ── */
-function gcalSyncNow() {
-    gcalCloseSettings();
-    gcalSyncFromCalendar(false);
 }
 </script>
 </body>
