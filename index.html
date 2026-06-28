@@ -722,7 +722,16 @@ function initApp() {
 /* ══════════ BOOKING FORM ══════════ */
 function getZone() { return document.querySelector('input[name="zone"]:checked')?.value||null; }
 
-function onDateChange() { selH=null; buildSlotGrid(); updateZoneSt(); }
+function onDateChange() {
+    // re-enforce limits dynamically (e.g. page left open past midnight)
+    const bd=document.getElementById('bDate');
+    const today=todayStr();
+    const tomorrow=addD(today,1);
+    bd.min=today; bd.max=tomorrow;
+    if(bd.value < today) bd.value=today;
+    if(bd.value > tomorrow) bd.value=tomorrow;
+    selH=null; buildSlotGrid(); updateZoneSt();
+}
 function onZoneChange() { selH=null; buildSlotGrid(); }
 
 function updateZoneSt() {
@@ -793,6 +802,7 @@ function submitBooking() {
     const name=document.getElementById('bName').value.trim();
 
     if(!date)      { showMsg('err','Por favor, selecione uma data.'); return; }
+    if(date < todayStr() || date > addD(todayStr(),1)) { showMsg('err','Só é possível reservar para hoje ou amanhã.'); return; }
     if(!zone)      { showMsg('err','Por favor, selecione uma zona (Cardio ou Musculação).'); return; }
     if(selH===null){ showMsg('err','Por favor, selecione um horário disponível.'); return; }
     if(!name)      { showMsg('err','Por favor, introduza o nome ou habitação.'); return; }
