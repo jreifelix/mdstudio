@@ -707,7 +707,7 @@ function initApp() {
         `${DOW_LONG[now.getDay()]}, ${now.getDate()} de ${MON_LONG[now.getMonth()]} de ${now.getFullYear()}`;
 
     const bd=document.getElementById('bDate');
-    bd.value=todayStr(); bd.min=todayStr(); bd.max=addD(todayStr(),30);
+    bd.value=todayStr(); bd.min=todayStr(); bd.max=addD(todayStr(),1);
 
     document.getElementById('rStart').value=todayStr();
     document.getElementById('rEnd').value=addD(todayStr(),6);
