@@ -977,19 +977,20 @@ function renderCalendar() {
         days.forEach(d=>{
             const closed = hr >= getHE(d);
             if(closed) { h+=`<div class="cal-cell cal-closed"></div>`; return; }
-            const sb=bookings.filter(b=>b.date===d&&b.hour===hr);  // chips: only in start slot
-            const sbOv=bookings.filter(b=>b.date===d&&b.hour<=hr&&hr<b.hour+(b.duration||0.5)); // color: full duration
+            // sbOv = all bookings whose duration overlaps this slot
+            const sbOv=bookings.filter(b=>b.date===d&&b.hour<=hr&&hr<b.hour+(b.duration||0.5));
             const hC=sbOv.some(b=>b.zone===ZC);
             const hM=sbOv.some(b=>b.zone===ZM);
             const isCH=d===t&&hr===nowSlot;
             let bc='';
             if(hC&&hM) bc='ch-b'; else if(hC) bc='ch-c'; else if(hM) bc='ch-m';
             h+=`<div class="cal-cell ${bc}${isCH?' cur-h':''}">`;
-            sb.forEach(b=>{
+            sbOv.forEach(b=>{
                 const cls=b.zone===ZC?'c':'m';
                 const ico=b.zone===ZC?'🏃':'💪';
                 const nm=b.name.length>13?b.name.slice(0,11)+'…':b.name;
-                h+=`<span class="bk-chip ${cls}" onclick="openModal('${b.id}')" title="${esc(b.name)} · ${b.zone} · ${fmtH(hr)}–${fmtH(hr+0.5)}">${ico} ${esc(nm)}</span>`;
+                const title=`${esc(b.name)} · ${b.zone} · ${fmtH(b.hour)}–${fmtH(b.hour+(b.duration||0.5))}`;
+                h+=`<span class="bk-chip ${cls}" onclick="openModal('${b.id}')" title="${title}">${ico} ${esc(nm)}</span>`;
             });
             h+=`</div>`;
         });
