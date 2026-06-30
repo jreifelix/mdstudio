@@ -101,12 +101,22 @@
             display: block; font-size: 11px; font-weight: 600;
             text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); margin-bottom: 6px;
         }
-        input[type="text"], input[type="password"], input[type="date"] {
+        input[type="text"], input[type="password"], input[type="date"], select {
             width: 100%; padding: 12px 14px;
             background: var(--bg); border: 1px solid var(--border);
             border-radius: var(--radius-sm); color: var(--text);
             font-size: 14px; font-family: inherit; outline: none;
             transition: border-color .2s, box-shadow .2s;
+        }
+        select {
+            appearance: none; -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 14px center;
+            padding-right: 36px; cursor: pointer;
+        }
+        select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
         }
         input:focus {
             border-color: var(--accent);
@@ -269,6 +279,17 @@
         .v-tab.act { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,.12); }
         .v-tab:hover:not(.act) { color: var(--text); }
 
+        /* ─── Duration selector ─── */
+        .dur-seg { display: flex; gap: 0; background: var(--border-light); border-radius: 10px; padding: 2px; }
+        .dur-btn {
+            flex: 1; padding: 7px 10px; background: transparent; border: none;
+            border-radius: 9px; color: var(--muted);
+            font-size: 13px; font-weight: 600; font-family: inherit;
+            cursor: pointer; transition: all .15s; text-align: center; min-height: 38px;
+        }
+        .dur-btn.act { background: var(--accent); color: #fff; box-shadow: 0 1px 6px rgba(0,122,255,.30); }
+        .dur-btn:hover:not(.act) { color: var(--text); }
+
         .range-row {
             display: none; align-items: center; gap: 7px;
             margin-bottom: 14px; flex-wrap: wrap;
@@ -303,7 +324,7 @@
 
         .cal-cell {
             background: var(--surface); border-radius: 6px; padding: 3px 4px;
-            min-height: 38px; border-left: 3px solid transparent; overflow: hidden;
+            min-height: 26px; border-left: 3px solid transparent; overflow: hidden;
             border: 1px solid var(--border-light); border-left: 3px solid transparent;
         }
         .cal-cell.ch-c  { border-left-color: var(--blue); }
@@ -402,7 +423,7 @@
             .tb-date { display: none; }
             .topbar { height: 50px; padding: 0 16px; }
             .tb-brand { font-size: 15px; letter-spacing: 1.5px; }
-            input[type="text"], input[type="password"], input[type="date"] { font-size: 16px !important; padding: 13px 14px; }
+            input[type="text"], input[type="password"], input[type="date"], select { font-size: 16px !important; padding: 13px 14px; }
             .zone-card { padding: 20px 8px 16px; }
             .z-ico { font-size: 32px; }
             .z-nm { font-size: 13px; }
@@ -497,7 +518,7 @@
 
             <div class="fg">
                 <label for="bDate">Data</label>
-                <input type="date" id="bDate" onchange="onDateChange()">
+                <select id="bDate" onchange="onDateChange()"></select>
             </div>
 
             <div class="fg">
@@ -519,6 +540,15 @@
                             <span class="z-st" id="stMuscle">Carregando…</span>
                         </label>
                     </div>
+                </div>
+            </div>
+
+            <div class="fg">
+                <div class="sec-lbl">Duração</div>
+                <div class="dur-seg">
+                    <button type="button" class="dur-btn" data-dur="0.5" onclick="setDur(0.5)">30 min</button>
+                    <button type="button" class="dur-btn act" data-dur="1" onclick="setDur(1)">1 hora</button>
+                    <button type="button" class="dur-btn" data-dur="1.5" onclick="setDur(1.5)">1h 30</button>
                 </div>
             </div>
 
@@ -633,7 +663,8 @@ const SK = 'mdstudio_v2';
 
 let bookings = loadData();
 let view     = 'today';
-let selH     = null;              // selected hour in booking form
+let selH     = null;              // selected start hour in booking form
+let selDur   = 1;                 // selected duration in hours (0.5 | 1 | 1.5)
 let activeId = null;              // booking open in modal
 let rangeS   = null, rangeE = null;
 
@@ -655,7 +686,8 @@ function fmtD(d) {
 }
 function pad(n) { return String(n).padStart(2,'0'); }
 function parseD(s) { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
-function fmtH(h) { return `${pad(h)}:00`; }
+function fmtH(h) { return `${pad(Math.floor(h))}:${h%1===0.5?'30':'00'}`; }
+function slotToTime(h) { return `${pad(Math.floor(h))}:${h%1===0.5?'30':'00'}:00`; }
 function addD(s, n) { const d=parseD(s); d.setDate(d.getDate()+n); return fmtD(d); }
 function dateBetween(s, e) {
     const r=[]; let c=s;
@@ -707,7 +739,7 @@ function initApp() {
         `${DOW_LONG[now.getDay()]}, ${now.getDate()} de ${MON_LONG[now.getMonth()]} de ${now.getFullYear()}`;
 
     const bd=document.getElementById('bDate');
-    bd.value=todayStr(); bd.min=todayStr(); bd.max=addD(todayStr(),1);
+    buildDateSelect(bd);
 
     document.getElementById('rStart').value=todayStr();
     document.getElementById('rEnd').value=addD(todayStr(),6);
@@ -722,34 +754,61 @@ function initApp() {
 /* ══════════ BOOKING FORM ══════════ */
 function getZone() { return document.querySelector('input[name="zone"]:checked')?.value||null; }
 
+function buildDateSelect(sel) {
+    const today = todayStr();
+    sel.innerHTML = '';
+    for (let i = 0; i <= 7; i++) {
+        const val  = addD(today, i);
+        const dt   = parseD(val);
+        const dow  = DOW_LONG[dt.getDay()];
+        const dd   = pad(dt.getDate());
+        const mm   = pad(dt.getMonth() + 1);
+        const yyyy = dt.getFullYear();
+        let label;
+        if      (i === 0) label = `Hoje  ·  ${dow}, ${dd}-${mm}-${yyyy}`;
+        else if (i === 1) label = `Amanhã  ·  ${dow}, ${dd}-${mm}-${yyyy}`;
+        else              label = `${dow}, ${dd}-${mm}-${yyyy}`;
+        const opt = document.createElement('option');
+        opt.value = val; opt.textContent = label;
+        sel.appendChild(opt);
+    }
+    sel.value = today;
+}
+
 function onDateChange() {
-    // re-enforce limits dynamically (e.g. page left open past midnight)
-    const bd=document.getElementById('bDate');
-    const today=todayStr();
-    const tomorrow=addD(today,1);
-    bd.min=today; bd.max=tomorrow;
-    if(bd.value < today) bd.value=today;
-    if(bd.value > tomorrow) bd.value=tomorrow;
     selH=null; buildSlotGrid(); updateZoneSt();
 }
 function onZoneChange() { selH=null; buildSlotGrid(); }
+
+function setDur(d) {
+    selDur = d;
+    document.querySelectorAll('.dur-btn').forEach(b => b.classList.toggle('act', parseFloat(b.dataset.dur) === d));
+    selH = null;
+    buildSlotGrid();
+    updateZoneSt();
+}
 
 function updateZoneSt() {
     const date=document.getElementById('bDate').value;
     if(!date) return;
     const he=getHE(date);
-    const db=bookings.filter(b=>b.date===date);
-    let cf=0,mf=0;
-    for(let h=HS;h<he;h++){
-        const sb=db.filter(b=>b.hour===h);
-        if(!sb.some(b=>b.zone===ZC)) cf++;
-        if(!sb.some(b=>b.zone===ZM)) mf++;
+    let cf=0, mf=0;
+    for(let h=HS; h<he; h+=0.5) {
+        let cOk=true, mOk=true;
+        for(let s=h; s<h+selDur-0.01; s+=0.5) {
+            if(s+0.5>he+0.01){ cOk=false; mOk=false; break; }
+            const sb=bookings.filter(b=>b.date===date && b.hour<=s && s<b.hour+(b.duration||0.5));
+            if(sb.some(b=>b.zone===ZC)) cOk=false;
+            if(sb.some(b=>b.zone===ZM)) mOk=false;
+            if(!cOk&&!mOk) break;
+        }
+        if(cOk) cf++;
+        if(mOk) mf++;
     }
-    const slots=he-HS;
     document.getElementById('stCardio').textContent=
-        cf===slots ? '— todos livres —' : cf===0 ? '— sem disponibilidade —' : `${cf} slot${cf!==1?'s':''} livre${cf!==1?'s':''}`;
+        cf===0 ? '— sem disponibilidade —' : `${cf} slot${cf!==1?'s':''} livre${cf!==1?'s':''}`;
     document.getElementById('stMuscle').textContent=
-        mf===slots ? '— todos livres —' : mf===0 ? '— sem disponibilidade —' : `${mf} slot${mf!==1?'s':''} livre${mf!==1?'s':''}`;
+        mf===0 ? '— sem disponibilidade —' : `${mf} slot${mf!==1?'s':''} livre${mf!==1?'s':''}`;
 }
 
 function buildSlotGrid() {
@@ -757,40 +816,45 @@ function buildSlotGrid() {
     const date=document.getElementById('bDate').value;
     const zone=getZone();
     const isToday=date===todayStr();
-    const curH=new Date().getHours();
+    const now=new Date();
+    const nowMins=now.getHours()+now.getMinutes()/60;
     const he=getHE(date);
     grid.innerHTML='';
 
-    for(let h=HS;h<he;h++) {
+    for(let h=HS; h<he; h+=0.5) {
         const btn=document.createElement('button');
         btn.type='button'; btn.className='slot-btn';
+        btn.dataset.h=h;
         btn.textContent=fmtH(h);
 
-        const sb=bookings.filter(b=>b.date===date&&b.hour===h);
-        const cT=sb.some(b=>b.zone===ZC);
-        const mT=sb.some(b=>b.zone===ZM);
-        const full=cT&&mT;
-        const past=isToday && h<curH;
+        // Check every 30-min sub-slot the full duration would occupy
+        let isPast=false, isFull=false, isZoneTaken=false, outOfBounds=false;
+        for(let s=h; s<h+selDur-0.01; s+=0.5) {
+            if(s+0.5>he+0.01){ outOfBounds=true; break; }
+            if(isToday && s<nowMins){ isPast=true; break; }
+            const sb=bookings.filter(b=>b.date===date && b.hour<=s && s<b.hour+(b.duration||0.5));
+            if(sb.some(b=>b.zone===ZC)&&sb.some(b=>b.zone===ZM)){ isFull=true; break; }
+            if(zone && sb.some(b=>b.zone===zone)){ isZoneTaken=true; break; }
+        }
 
-        if(past) {
+        if(outOfBounds||isPast) {
             btn.classList.add('past'); btn.disabled=true;
-            btn.title='Horário já passou';
-        } else if(full) {
+            btn.title=outOfBounds?'Duração ultrapassa o horário de fecho':'Horário já passou';
+        } else if(isFull) {
             btn.classList.add('full'); btn.disabled=true;
             btn.title='Slot completo (Cardio + Musculação)';
-        } else if(zone && ((zone===ZC&&cT)||(zone===ZM&&mT))) {
+        } else if(isZoneTaken) {
             btn.classList.add('zone-taken'); btn.disabled=true;
             btn.title='Esta zona já está reservada neste horário';
         } else {
             btn.addEventListener('click', ()=>{
-                if(selH===h){ selH=null; btn.classList.remove('sel'); }
-                else {
-                    selH=h;
-                    grid.querySelectorAll('.slot-btn').forEach(b=>b.classList.remove('sel'));
-                    btn.classList.add('sel');
-                }
+                selH = (selH===h) ? null : h;
+                grid.querySelectorAll('.slot-btn').forEach(b=>{
+                    const bh=parseFloat(b.dataset.h);
+                    b.classList.toggle('sel', selH!==null && bh>=selH && bh<selH+selDur);
+                });
             });
-            if(selH===h) btn.classList.add('sel');
+            if(selH!==null && h>=selH && h<selH+selDur) btn.classList.add('sel');
         }
         grid.appendChild(btn);
     }
@@ -802,18 +866,22 @@ function submitBooking() {
     const name=document.getElementById('bName').value.trim();
 
     if(!date)      { showMsg('err','Por favor, selecione uma data.'); return; }
-    if(date < todayStr() || date > addD(todayStr(),1)) { showMsg('err','Só é possível reservar para hoje ou amanhã.'); return; }
+    if(date < todayStr() || date > addD(todayStr(),7)) { showMsg('err','Data fora do intervalo permitido.'); return; }
     if(!zone)      { showMsg('err','Por favor, selecione uma zona (Cardio ou Musculação).'); return; }
     if(selH===null){ showMsg('err','Por favor, selecione um horário disponível.'); return; }
     if(!name)      { showMsg('err','Por favor, introduza o nome ou habitação.'); return; }
+    if(selH+selDur > getHE(date)+0.01) { showMsg('err','A duração selecionada ultrapassa o horário de fecho.'); return; }
 
-    const sb=bookings.filter(b=>b.date===date&&b.hour===selH);
-    if(sb.some(b=>b.zone===zone)){
-        showMsg('err',`A zona de ${zone==='cardio'?'Cardio':'Musculação'} já está reservada neste horário.`); return;
+    // Check conflicts across all sub-slots of the duration
+    for(let s=selH; s<selH+selDur-0.01; s+=0.5) {
+        const sb=bookings.filter(b=>b.date===date && b.hour<=s && s<b.hour+(b.duration||0.5));
+        if(sb.some(b=>b.zone===zone)){
+            showMsg('err',`A zona de ${zone==='cardio'?'Cardio':'Musculação'} já está reservada neste horário.`); return;
+        }
+        if(sb.length>=2){ showMsg('err','Este horário já está com lotação máxima (2 ocupantes).'); return; }
     }
-    if(sb.length>=2){ showMsg('err','Este horário já está com lotação máxima (2 ocupantes).'); return; }
 
-    const bk={id:genId(), date, hour:selH, zone, name, createdAt:new Date().toISOString()};
+    const bk={id:genId(), date, hour:selH, duration:selDur, zone, name, createdAt:new Date().toISOString()};
 
     bookings.push(bk);
     saveData();
@@ -827,7 +895,7 @@ function submitBooking() {
     updateZoneSt();
 
     const zLbl=zone===ZC?'🏃 Cardio':'💪 Musculação';
-    showMsg('ok',`✓ Reserva confirmada!  ${fmtH(bk.hour)}–${fmtH(bk.hour+1)} · ${zLbl} · ${bk.name}`);
+    showMsg('ok',`✓ Reserva confirmada!  ${fmtH(bk.hour)}–${fmtH(bk.hour+bk.duration)} · ${zLbl} · ${bk.name}`);
 }
 
 function showMsg(type, txt) {
@@ -841,14 +909,14 @@ function showMsg(type, txt) {
 function renderTodayList() {
     const el=document.getElementById('todayList');
     const t=todayStr();
-    const curH=new Date().getHours();
-    const list=bookings.filter(b=>b.date===t && b.hour>=curH).sort((a,b)=>a.hour-b.hour);
+    const nowMins2=new Date().getHours()+new Date().getMinutes()/60;
+    const list=bookings.filter(b=>b.date===t && b.hour+(b.duration||0.5)>nowMins2).sort((a,b)=>a.hour-b.hour);
     if(!list.length){ el.innerHTML='<div class="empty">Sem reservas para hoje</div>'; return; }
     el.innerHTML=list.map(b=>`
         <div class="mini-bk" onclick="openModal('${b.id}')">
             <span class="mb-ico">${b.zone===ZC?'🏃':'💪'}</span>
             <div style="flex:1;min-width:0">
-                <div class="mb-tm">${fmtH(b.hour)} – ${fmtH(b.hour+1)}</div>
+                <div class="mb-tm">${fmtH(b.hour)} – ${fmtH(b.hour+(b.duration||0.5))}</div>
                 <div class="mb-dt">${esc(b.name)} · ${b.zone===ZC?'Cardio':'Musculação'}</div>
             </div>
             <span style="color:var(--muted);font-size:15px">›</span>
@@ -884,7 +952,8 @@ function getViewDays() {
 function renderCalendar() {
     const days=getViewDays();
     const t=todayStr();
-    const curH=new Date().getHours();
+    const now=new Date();
+    const nowSlot=now.getHours()+(now.getMinutes()>=30?0.5:0);
     const n=days.length;
     const cols=`44px repeat(${n},1fr)`;
 
@@ -903,15 +972,16 @@ function renderCalendar() {
 
     // hour rows — iterate up to max HE across all visible days
     const maxHE = days.reduce((m, d) => Math.max(m, getHE(d)), HS);
-    for(let hr=HS;hr<maxHE;hr++) {
+    for(let hr=HS;hr<maxHE;hr+=0.5) {
         h+=`<div class="cal-tlbl">${fmtH(hr)}</div>`;
         days.forEach(d=>{
             const closed = hr >= getHE(d);
             if(closed) { h+=`<div class="cal-cell cal-closed"></div>`; return; }
-            const sb=bookings.filter(b=>b.date===d&&b.hour===hr);
-            const hC=sb.some(b=>b.zone===ZC);
-            const hM=sb.some(b=>b.zone===ZM);
-            const isCH=d===t&&hr===curH;
+            const sb=bookings.filter(b=>b.date===d&&b.hour===hr);  // chips: only in start slot
+            const sbOv=bookings.filter(b=>b.date===d&&b.hour<=hr&&hr<b.hour+(b.duration||0.5)); // color: full duration
+            const hC=sbOv.some(b=>b.zone===ZC);
+            const hM=sbOv.some(b=>b.zone===ZM);
+            const isCH=d===t&&hr===nowSlot;
             let bc='';
             if(hC&&hM) bc='ch-b'; else if(hC) bc='ch-c'; else if(hM) bc='ch-m';
             h+=`<div class="cal-cell ${bc}${isCH?' cur-h':''}">`;
@@ -919,7 +989,7 @@ function renderCalendar() {
                 const cls=b.zone===ZC?'c':'m';
                 const ico=b.zone===ZC?'🏃':'💪';
                 const nm=b.name.length>13?b.name.slice(0,11)+'…':b.name;
-                h+=`<span class="bk-chip ${cls}" onclick="openModal('${b.id}')" title="${esc(b.name)} · ${b.zone} · ${fmtH(hr)}–${fmtH(hr+1)}">${ico} ${esc(nm)}</span>`;
+                h+=`<span class="bk-chip ${cls}" onclick="openModal('${b.id}')" title="${esc(b.name)} · ${b.zone} · ${fmtH(hr)}–${fmtH(hr+0.5)}">${ico} ${esc(nm)}</span>`;
             });
             h+=`</div>`;
         });
@@ -935,7 +1005,7 @@ function openModal(id) {
     if(!b) return;
     activeId=id;
     document.getElementById('mDate').textContent=fmtDateLong(b.date);
-    document.getElementById('mTime').textContent=`${fmtH(b.hour)} – ${fmtH(b.hour+1)}`;
+    document.getElementById('mTime').textContent=`${fmtH(b.hour)} – ${fmtH(b.hour+(b.duration||0.5))}`;
     document.getElementById('mZone').textContent=b.zone===ZC?'🏃 Cardio':'💪 Musculação';
     document.getElementById('mName').textContent=b.name;
     document.getElementById('mOv').classList.add('open');
@@ -1046,7 +1116,7 @@ function gcalFetchJSONP() {
 function gcalCreateEvent(bk) {
     if (!gcalEnabled) return;
     const p2 = n => String(n).padStart(2, '0');
-    const meta = `[MDSTUDIO_v1]\ndate: ${bk.date}\nhour: ${bk.hour}\nzone: ${bk.zone}\nname: ${bk.name}\nid: ${bk.id}`;
+    const meta = `[MDSTUDIO_v1]\ndate: ${bk.date}\nhour: ${bk.hour}\nduration: ${bk.duration||0.5}\nzone: ${bk.zone}\nname: ${bk.name}\nid: ${bk.id}`;
     fetch(AS_URL, {
         method:  'POST',
         mode:    'no-cors',
@@ -1056,8 +1126,8 @@ function gcalCreateEvent(bk) {
             summary:     `MD.Studio | ${bk.zone === ZC ? '🏃 Cardio' : '💪 Musculação'} — ${bk.name}`,
             description: meta,
             location:    'MD.Studio Fitness',
-            start:       `${bk.date}T${p2(bk.hour)}:00:00`,
-            end:         `${bk.date}T${p2(bk.hour + 1)}:00:00`
+            start:       `${bk.date}T${slotToTime(bk.hour)}`,
+            end:         `${bk.date}T${slotToTime(bk.hour+(bk.duration||0.5))}`
         })
     }).catch(e => console.warn('Create event failed:', e));
 }
@@ -1077,12 +1147,13 @@ function gcalParseEvent(ev) {
     if (!desc.includes('[MDSTUDIO_v1]')) return null;
     const get = key => { const m = desc.match(new RegExp(`^${key}: (.+)$`, 'm')); return m ? m[1].trim() : null; };
     const date = get('date');
-    const hour = parseInt(get('hour'));
+    const hour = parseFloat(get('hour'));
+    const duration = parseFloat(get('duration')) || 0.5;
     const zone = get('zone');
     const name = get('name');
     const id   = get('id') || genId();
     if (!date || isNaN(hour) || !zone || !name) return null;
-    return { id, date, hour, zone, name, createdAt: ev.start || new Date().toISOString() };
+    return { id, date, hour, duration, zone, name, createdAt: ev.start || new Date().toISOString() };
 }
 </script>
 </body>
