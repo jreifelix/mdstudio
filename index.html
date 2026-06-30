@@ -562,6 +562,11 @@
                 <input type="text" id="bName" placeholder="Ex: João Silva · Hab. 3A" autocomplete="off">
             </div>
 
+            <div class="fg">
+                <label for="bPin">Código de cancelamento <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(opcional · 3 dígitos)</span></label>
+                <input type="password" id="bPin" placeholder="deixe vazio para cancelamento livre" maxlength="3" pattern="[0-9]{0,3}" autocomplete="off" inputmode="numeric">
+            </div>
+
             <button class="btn btn-primary btn-full" onclick="submitBooking()">✓ &nbsp;Confirmar Reserva</button>
             <button class="btn btn-ghost btn-full" id="syncBtn" onclick="gcalSyncFromCalendar()" title="Sincronizar com Google Calendar" style="display:none;margin-top:10px;">🔄 &nbsp;Atualizar Reservas</button>
             <div class="alert" id="bookMsg"></div>
@@ -639,6 +644,10 @@
         <div class="mrow"><span class="mlbl">⏰ Horário</span>  <span class="mval" id="mTime">—</span></div>
         <div class="mrow"><span class="mlbl">🏋️ Zona</span>     <span class="mval" id="mZone">—</span></div>
         <div class="mrow"><span class="mlbl">👤 Nome</span>     <span class="mval" id="mName">—</span></div>
+        <div id="mPinRow" style="display:none; margin-top:14px;">
+            <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin-bottom:6px;">🔒 Código de cancelamento</label>
+            <input type="password" id="mPinInput" placeholder="Introduza o código de 3 dígitos" maxlength="3" pattern="[0-9]{3}" inputmode="numeric" autocomplete="off" style="width:100%;padding:11px 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:16px;font-family:inherit;outline:none;">
+        </div>
         <div class="modal-acts">
             <button class="btn btn-danger" onclick="delActiveBk()">🗑️ &nbsp;Cancelar Reserva</button>
             <button class="btn btn-ghost"  onclick="closeModal()">Fechar</button>
@@ -864,12 +873,15 @@ function submitBooking() {
     const date=document.getElementById('bDate').value;
     const zone=getZone();
     const name=document.getElementById('bName').value.trim();
+    const pinRaw=document.getElementById('bPin').value.trim();
+    const pin=pinRaw.match(/^\d{3}$/) ? pinRaw : '';  // only accept exactly 3 digits
 
     if(!date)      { showMsg('err','Por favor, selecione uma data.'); return; }
     if(date < todayStr() || date > addD(todayStr(),7)) { showMsg('err','Data fora do intervalo permitido.'); return; }
     if(!zone)      { showMsg('err','Por favor, selecione uma zona (Cardio ou Musculação).'); return; }
     if(selH===null){ showMsg('err','Por favor, selecione um horário disponível.'); return; }
     if(!name)      { showMsg('err','Por favor, introduza o nome ou habitação.'); return; }
+    if(pinRaw && !pinRaw.match(/^\d{3}$/)) { showMsg('err','O código deve ter exatamente 3 dígitos numéricos (ou deixe vazio).'); return; }
     if(selH+selDur > getHE(date)+0.01) { showMsg('err','A duração selecionada ultrapassa o horário de fecho.'); return; }
 
     // Check conflicts across all sub-slots of the duration
@@ -881,13 +893,14 @@ function submitBooking() {
         if(sb.length>=2){ showMsg('err','Este horário já está com lotação máxima (2 ocupantes).'); return; }
     }
 
-    const bk={id:genId(), date, hour:selH, duration:selDur, zone, name, createdAt:new Date().toISOString()};
+    const bk={id:genId(), date, hour:selH, duration:selDur, zone, name, pin, createdAt:new Date().toISOString()};
 
     bookings.push(bk);
     saveData();
     gcalCreateEvent(bk); // fire-and-forget — no popup, no wait
     selH=null;
     document.getElementById('bName').value='';
+    document.getElementById('bPin').value='';
     document.querySelectorAll('input[name="zone"]').forEach(r=>r.checked=false);
     buildSlotGrid();
     renderCalendar();
@@ -1009,6 +1022,11 @@ function openModal(id) {
     document.getElementById('mTime').textContent=`${fmtH(b.hour)} – ${fmtH(b.hour+(b.duration||0.5))}`;
     document.getElementById('mZone').textContent=b.zone===ZC?'🏃 Cardio':'💪 Musculação';
     document.getElementById('mName').textContent=b.name;
+    // show PIN field only if booking has a pin
+    const pinRow=document.getElementById('mPinRow');
+    const pinInput=document.getElementById('mPinInput');
+    pinInput.value='';
+    pinRow.style.display = b.pin ? 'block' : 'none';
     document.getElementById('mOv').classList.add('open');
 }
 function closeModal() { document.getElementById('mOv').classList.remove('open'); activeId=null; }
@@ -1016,15 +1034,32 @@ function onOvClick(e) { if(e.target===document.getElementById('mOv')) closeModal
 
 function delActiveBk() {
     if(!activeId) return;
+    const b=bookings.find(bk=>bk.id===activeId);
+    if(!b) return;
+    // if booking has a PIN, validate it first
+    if(b.pin) {
+        const entered=document.getElementById('mPinInput').value.trim();
+        if(!entered){ showPinErr('Introduza o código de cancelamento.'); return; }
+        if(entered !== b.pin){ showPinErr('Código incorreto. Tente novamente.'); return; }
+    }
     if(!confirm('Tem a certeza que pretende cancelar esta reserva?')) return;
     gcalDeleteEvent(activeId);
-    bookings=bookings.filter(b=>b.id!==activeId);
+    bookings=bookings.filter(bk=>bk.id!==activeId);
     saveData();
     closeModal();
     buildSlotGrid();
     renderCalendar();
     renderTodayList();
     updateZoneSt();
+}
+
+function showPinErr(msg) {
+    const inp=document.getElementById('mPinInput');
+    inp.style.borderColor='var(--red)';
+    inp.style.boxShadow='0 0 0 3px rgba(255,59,48,.15)';
+    inp.placeholder=msg;
+    inp.value='';
+    setTimeout(()=>{ inp.style.borderColor=''; inp.style.boxShadow=''; inp.placeholder='Introduza o código de 3 dígitos'; }, 2500);
 }
 
 // Also wire up Enter on login password field
@@ -1117,7 +1152,7 @@ function gcalFetchJSONP() {
 function gcalCreateEvent(bk) {
     if (!gcalEnabled) return;
     const p2 = n => String(n).padStart(2, '0');
-    const meta = `[MDSTUDIO_v1]\ndate: ${bk.date}\nhour: ${bk.hour}\nduration: ${bk.duration||0.5}\nzone: ${bk.zone}\nname: ${bk.name}\nid: ${bk.id}`;
+    const meta = `[MDSTUDIO_v1]\ndate: ${bk.date}\nhour: ${bk.hour}\nduration: ${bk.duration||0.5}\nzone: ${bk.zone}\nname: ${bk.name}\npin: ${bk.pin||''}\nid: ${bk.id}`;
     fetch(AS_URL, {
         method:  'POST',
         mode:    'no-cors',
@@ -1153,8 +1188,9 @@ function gcalParseEvent(ev) {
     const zone = get('zone');
     const name = get('name');
     const id   = get('id') || genId();
+    const pin  = get('pin') || '';
     if (!date || isNaN(hour) || !zone || !name) return null;
-    return { id, date, hour, duration, zone, name, createdAt: ev.start || new Date().toISOString() };
+    return { id, date, hour, duration, zone, name, pin, createdAt: ev.start || new Date().toISOString() };
 }
 </script>
 </body>
