@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MD.Studio — Guia do Utilizador</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: #fff;
+    color: #1c1c1e;
+    line-height: 1.6;
+  }
+
+  /* ── PAGE SETUP ── */
+  @page { size: A4; margin: 0; }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    padding: 0;
+    page-break-after: always;
+    position: relative;
+    overflow: hidden;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  /* ══════════════════ COVER ══════════════════ */
+  .cover {
+    background: linear-gradient(160deg, #f2f2f7 0%, #e8e8f0 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 297mm;
+    padding: 40mm 20mm;
+    text-align: center;
+  }
+
+  .cover-logo {
+    width: 90px; height: 90px;
+    background: #fff;
+    border-radius: 22px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 30px rgba(0,0,0,.12);
+    margin-bottom: 24px;
+    font-size: 44px;
+  }
+
+  .cover-title {
+    font-size: 42px; font-weight: 900;
+    letter-spacing: 4px; color: #1c1c1e;
+    margin-bottom: 6px;
+  }
+  .cover-title em { color: #007aff; font-style: normal; }
+
+  .cover-sub {
+    font-size: 14px; font-weight: 500;
+    color: #8e8e93; letter-spacing: 2px;
+    text-transform: uppercase; margin-bottom: 48px;
+  }
+
+  .cover-divider {
+    width: 60px; height: 3px;
+    background: #007aff; border-radius: 2px;
+    margin: 0 auto 48px;
+  }
+
+  .cover-desc {
+    font-size: 18px; font-weight: 400;
+    color: #48484a; max-width: 120mm;
+    line-height: 1.7; margin-bottom: 60px;
+  }
+
+  .cover-url {
+    background: #007aff; color: #fff;
+    padding: 14px 32px; border-radius: 14px;
+    font-size: 15px; font-weight: 700;
+    letter-spacing: .5px;
+    box-shadow: 0 4px 20px rgba(0,122,255,.35);
+  }
+
+  .cover-footer {
+    position: absolute; bottom: 20mm;
+    font-size: 11px; color: #aeaeb2;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+
+  /* ══════════════════ CONTENT PAGES ══════════════════ */
+  .content-page {
+    padding: 18mm 16mm;
+    display: block;
+  }
+
+  .page-header {
+    display: flex; align-items: center; gap: 12px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f2f2f7;
+    margin-bottom: 22px;
+  }
+
+  .ph-num {
+    width: 32px; height: 32px;
+    background: #007aff; color: #fff;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 800; flex-shrink: 0;
+  }
+
+  .ph-title {
+    font-size: 20px; font-weight: 800; color: #1c1c1e;
+  }
+
+  .ph-logo {
+    margin-left: auto;
+    font-size: 11px; font-weight: 700;
+    color: #aeaeb2; letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .ph-logo em { color: #007aff; font-style: normal; }
+
+  /* ── Two-column layout ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .three-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  /* ── Step block ── */
+  .step {
+    display: flex; gap: 14px; margin-bottom: 20px; align-items: flex-start;
+  }
+  .step-num {
+    width: 28px; height: 28px; flex-shrink: 0;
+    background: #007aff; color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800;
+    margin-top: 1px;
+  }
+  .step-body { flex: 1; }
+  .step-title { font-size: 14px; font-weight: 700; color: #1c1c1e; margin-bottom: 3px; }
+  .step-desc  { font-size: 12.5px; color: #48484a; line-height: 1.55; }
+
+  /* ── Info box ── */
+  .info-box {
+    background: #f2f2f7; border-radius: 12px;
+    padding: 14px 16px; margin-bottom: 18px;
+    border-left: 3px solid #007aff;
+  }
+  .info-box.warn { border-left-color: #ff9500; background: #fff9f0; }
+  .info-box.tip  { border-left-color: #34c759; background: #f0fff4; }
+
+  .info-title { font-size: 12px; font-weight: 700; color: #007aff; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .8px; }
+  .info-box.warn .info-title { color: #ff9500; }
+  .info-box.tip  .info-title { color: #34c759; }
+  .info-text  { font-size: 12.5px; color: #48484a; line-height: 1.55; }
+
+  /* ── Section label ── */
+  .sec { font-size: 11px; font-weight: 700; color: #8e8e93; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; }
+
+  /* ══════════════════ PHONE MOCKUP ══════════════════ */
+  .phone {
+    width: 72mm;
+    background: #fff;
+    border-radius: 14mm;
+    border: 3px solid #1c1c1e;
+    box-shadow: 0 8px 32px rgba(0,0,0,.18), inset 0 0 0 1px rgba(255,255,255,.5);
+    overflow: hidden;
+    position: relative;
+    margin: 0 auto;
+  }
+
+  .phone-notch {
+    background: #1c1c1e;
+    height: 6mm;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 0 0 4mm 4mm;
+    margin: 0 auto;
+    width: 28mm;
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    z-index: 10;
+  }
+  .phone-notch::before {
+    content: '';
+    width: 8mm; height: 2mm;
+    background: #333; border-radius: 1mm;
+  }
+
+  .phone-screen {
+    background: #f2f2f7;
+    padding-top: 7mm;
+    min-height: 140mm;
+    overflow: hidden;
+    border-radius: 12mm;
+  }
+
+  .phone-home-bar {
+    height: 5mm;
+    display: flex; align-items: center; justify-content: center;
+    background: #f2f2f7;
+  }
+  .phone-home-bar::before {
+    content: '';
+    width: 15mm; height: 1.5mm;
+    background: #1c1c1e; border-radius: 1mm;
+    opacity: .3;
+  }
+
+  /* ── App UI inside phone ── */
+  .app-topbar {
+    background: rgba(242,242,247,.92);
+    padding: 4px 10px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(0,0,0,.1);
+    font-size: 7px;
+  }
+
+  .app-tb-brand {
+    display: flex; align-items: center; gap: 5px;
+    font-weight: 800; letter-spacing: 1.5px; font-size: 7.5px;
+  }
+  .app-tb-brand em { color: #007aff; font-style: normal; }
+
+  .app-tb-icon {
+    width: 16px; height: 16px;
+    background: #fff;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.12);
+    overflow: hidden;
+  }
+
+  .app-tb-date { font-size: 6px; color: #8e8e93; }
+  .app-tb-exit { font-size: 6px; color: #007aff; font-weight: 600; }
+
+  .app-body { padding: 8px 8px 4px; }
+
+  .app-pt {
+    display: flex; gap: 6px; align-items: center; margin-bottom: 8px;
+  }
+  .app-pt-icon {
+    width: 22px; height: 22px;
+    background: #fff;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  }
+  .app-pt h2 { font-size: 9px; font-weight: 800; }
+
+  .app-fg { margin-bottom: 6px; }
+  .app-lbl { font-size: 5.5px; font-weight: 700; color: #8e8e93; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 3px; }
+
+  .app-select {
+    background: #fff;
+    border: 1px solid #d1d1d6;
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 6.5px; color: #1c1c1e;
+    width: 100%;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .app-select::after { content: '▾'; color: #8e8e93; font-size: 6px; }
+
+  .app-input {
+    background: #fff;
+    border: 1px solid #d1d1d6;
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 6.5px; color: #8e8e93;
+    width: 100%;
+  }
+
+  .app-zone-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px; }
+  .app-zone-card {
+    background: #fff; border: 1px solid #d1d1d6;
+    border-radius: 7px; padding: 6px 4px;
+    text-align: center;
+    font-size: 5.5px;
+  }
+  .app-zone-card.sel {
+    border-color: #007aff;
+    background: rgba(0,122,255,.06);
+  }
+  .app-zone-card .zi { font-size: 12px; display: block; }
+  .app-zone-card .zn { font-weight: 700; color: #1c1c1e; }
+  .app-zone-card .zs { color: #8e8e93; font-size: 5px; }
+
+  .app-dur-seg { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; background: #e5e5ea; border-radius: 7px; padding: 2px; margin-bottom: 6px; }
+  .app-dur-btn { text-align: center; padding: 4px 2px; border-radius: 5px; font-size: 5.5px; font-weight: 600; color: #8e8e93; }
+  .app-dur-btn.act { background: #007aff; color: #fff; }
+
+  .app-slot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin-bottom: 6px; }
+  .app-slot {
+    background: #fff; border: 1px solid #d1d1d6;
+    border-radius: 5px; padding: 4px 2px;
+    text-align: center; font-size: 5.5px; font-weight: 600; color: #1c1c1e;
+  }
+  .app-slot.past { background: #f2f2f7; color: #c7c7cc; border-color: #e5e5ea; }
+  .app-slot.full { background: #fff0f0; color: #ff3b30; border-color: #ffcccb; }
+  .app-slot.sel  { background: #007aff; color: #fff; border-color: #007aff; }
+  .app-slot.taken{ background: #fff5e6; color: #ff9500; border-color: #ffd699; }
+
+  .app-btn-primary {
+    background: #007aff; color: #fff;
+    border-radius: 8px; padding: 6px;
+    text-align: center; font-size: 7px; font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .app-btn-ghost {
+    background: #fff; color: #007aff;
+    border: 1px solid #d1d1d6;
+    border-radius: 8px; padding: 5px;
+    text-align: center; font-size: 6px; font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .app-alert-ok {
+    background: #f0fff4; border: 1px solid #34c759;
+    border-radius: 7px; padding: 5px 7px;
+    font-size: 6px; color: #1c7a35; margin-bottom: 6px;
+  }
+
+  .app-alert-err {
+    background: #fff0f0; border: 1px solid #ff3b30;
+    border-radius: 7px; padding: 5px 7px;
+    font-size: 6px; color: #c0392b; margin-bottom: 6px;
+  }
+
+  .app-hr { border: none; border-top: 1px solid #e5e5ea; margin: 8px 0; }
+
+  .app-sec-lbl { font-size: 5.5px; font-weight: 700; color: #8e8e93; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 5px; }
+
+  .app-mini-bk {
+    background: #fff; border-radius: 7px; border: 1px solid #e5e5ea;
+    padding: 6px 7px; margin-bottom: 4px;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .app-mini-bk .ico { font-size: 12px; }
+  .app-mini-bk .tm  { font-size: 6px; font-weight: 700; }
+  .app-mini-bk .dt  { font-size: 5.5px; color: #8e8e93; }
+  .app-mini-bk .arr { font-size: 9px; color: #c7c7cc; margin-left: auto; }
+
+  /* Bottom nav */
+  .app-bottom-nav {
+    display: grid; grid-template-columns: 1fr 1fr;
+    background: rgba(242,242,247,.95);
+    border-top: 1px solid rgba(0,0,0,.1);
+    padding: 4px 0 2px;
+  }
+  .app-bn-item {
+    display: flex; flex-direction: column; align-items: center; gap: 1px;
+    font-size: 5px; font-weight: 600; color: #8e8e93; padding: 2px;
+  }
+  .app-bn-item.act { color: #007aff; }
+  .app-bn-item .bni { font-size: 12px; }
+
+  /* Calendar */
+  .app-cal-grid { overflow: hidden; }
+  .app-cal-row  { display: grid; gap: 2px; margin-bottom: 2px; }
+  .app-cal-hdr  {
+    background: #fff; border-radius: 5px; border: 1px solid #e5e5ea;
+    padding: 3px 2px; text-align: center; font-size: 5px;
+  }
+  .app-cal-hdr.today { background: rgba(0,122,255,.08); border-color: rgba(0,122,255,.2); }
+  .app-cal-hdr .dow { font-size: 4px; color: #8e8e93; text-transform: uppercase; font-weight: 700; }
+  .app-cal-hdr .day { font-size: 9px; font-weight: 800; }
+  .app-cal-cell {
+    background: #fff; border-radius: 4px; min-height: 10px;
+    border: 1px solid #e5e5ea; border-left: 2px solid transparent;
+    font-size: 5px; padding: 1px 2px; overflow: hidden;
+  }
+  .app-cal-cell.c { border-left-color: #007aff; }
+  .app-cal-cell.m { border-left-color: #ff9500; }
+  .app-cal-chip {
+    background: rgba(0,122,255,.1); color: #007aff;
+    border-radius: 3px; font-size: 4.5px; font-weight: 600;
+    padding: 1px 3px; display: block; margin-bottom: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .app-cal-chip.m { background: rgba(255,149,0,.1); color: #ff9500; }
+  .app-cal-tlbl { font-size: 5px; color: #8e8e93; text-align: right; padding-right: 3px; display: flex; align-items: center; justify-content: flex-end; }
+
+  /* Modal */
+  .app-modal-ov {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,.35);
+    display: flex; align-items: flex-end;
+    z-index: 50;
+  }
+  .app-modal {
+    background: #fff;
+    border-radius: 16px 16px 0 0;
+    padding: 14px 12px 10px;
+    width: 100%;
+  }
+  .app-modal h4 { font-size: 9px; font-weight: 800; margin-bottom: 10px; }
+  .app-mrow {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 0; border-bottom: 1px solid #f2f2f7;
+    font-size: 7px;
+  }
+  .app-mrow .lbl { color: #8e8e93; }
+  .app-mrow .val { font-weight: 600; }
+  .app-modal-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+  .app-modal-del {
+    background: #fff0f0; color: #ff3b30;
+    border: 1px solid #ffcccb; border-radius: 7px;
+    padding: 5px; text-align: center; font-size: 6px; font-weight: 700;
+  }
+  .app-modal-close {
+    background: #f2f2f7; color: #1c1c1e;
+    border-radius: 7px; padding: 5px;
+    text-align: center; font-size: 6px; font-weight: 600;
+  }
+
+  .app-pin-field {
+    background: #f2f2f7; border: 1px solid #d1d1d6;
+    border-radius: 6px; padding: 5px 7px;
+    font-size: 6px; color: #8e8e93; margin: 6px 0;
+  }
+
+  /* Login screen */
+  .app-login {
+    background: #f2f2f7;
+    min-height: 130mm;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 12px;
+  }
+  .app-login-card {
+    background: #fff; border-radius: 14px;
+    padding: 16px 14px; width: 100%;
+    box-shadow: 0 4px 20px rgba(0,0,0,.08);
+    text-align: center;
+  }
+  .app-login-icon {
+    width: 48px; height: 48px;
+    background: #fff; border-radius: 12px;
+    margin: 0 auto 8px;
+    box-shadow: 0 3px 12px rgba(0,0,0,.1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    overflow: hidden;
+  }
+  .app-login-title { font-size: 12px; font-weight: 900; letter-spacing: 2px; margin-bottom: 2px; }
+  .app-login-title em { color: #007aff; font-style: normal; }
+  .app-login-sub { font-size: 6px; color: #8e8e93; margin-bottom: 12px; letter-spacing: 1px; text-transform: uppercase; }
+
+  /* ── Callout labels ── */
+  .callout-wrap { position: relative; margin: 0 auto; }
+  .callout {
+    position: absolute;
+    font-size: 10px; font-weight: 600; color: #007aff;
+    background: #e8f0ff;
+    border: 1.5px solid #007aff;
+    border-radius: 20px;
+    padding: 3px 10px;
+    white-space: nowrap;
+    line-height: 1.4;
+  }
+  .callout::before {
+    content: '';
+    position: absolute;
+    width: 20px; height: 1.5px;
+    background: #007aff;
+  }
+
+  /* ── Legend ── */
+  .legend-row { display: flex; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #48484a; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 16px; }
+  th { background: #f2f2f7; padding: 8px 12px; text-align: left; font-size: 11px; font-weight: 700; color: #8e8e93; text-transform: uppercase; letter-spacing: .8px; }
+  td { padding: 9px 12px; border-bottom: 1px solid #f2f2f7; color: #48484a; }
+  tr:last-child td { border-bottom: none; }
+
+  /* ── Print ── */
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page { page-break-after: always; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     PAGE 1 — COVER
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="cover">
+    <div class="cover-logo">🏋️</div>
+    <div class="cover-title">MD<em>.</em>STUDIO</div>
+    <div class="cover-sub">Gestão do Estúdio de Fitness</div>
+    <div class="cover-divider"></div>
+    <div class="cover-desc">
+      Guia rápido para reservar o espaço, consultar o calendário e gerir as suas marcações diretamente do smartphone.
+    </div>
+    <div class="cover-url">jreifelix.github.io/mdstudio</div>
+    <div class="cover-footer">Edifício MD.Studio · Uso interno</div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     PAGE 2 — ACESSO E LOGIN
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="content-page">
+    <div class="page-header">
+      <div class="ph-num">1</div>
+      <div class="ph-title">Como Aceder</div>
+      <div class="ph-logo">MD<em>.</em>STUDIO</div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <p class="sec">Acesso</p>
+
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Abrir o browser no smartphone</div>
+            <div class="step-desc">Use o Safari (iPhone) ou Chrome (Android). Abra o endereço abaixo.</div>
+          </div>
+        </div>
+
+        <div class="info-box" style="margin-left: 42px;">
+          <div class="info-title">🔗 Endereço da aplicação</div>
+          <div class="info-text" style="font-weight:700; font-size:13px; color:#007aff;">jreifelix.github.io/mdstudio</div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Introduzir as credenciais</div>
+            <div class="step-desc">Utilize o nome de utilizador e palavra-passe fornecidos pelo grupo do edifício.</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Adicionar ao Ecrã de Início (recomendado)</div>
+            <div class="step-desc">No <strong>Safari</strong>: toque em <strong>Partilhar</strong> (ícone □↑) → <strong>Adicionar ao Ecrã de Início</strong>. A app fica guardada como se fosse uma app nativa.</div>
+          </div>
+        </div>
+
+        <div class="info-box tip" style="margin-top: 8px;">
+          <div class="info-title">💡 Dica</div>
+          <div class="info-text">Ao adicionar ao Ecrã de Início, a app abre em ecrã completo sem barra de endereços — exatamente como uma app instalada.</div>
+        </div>
+
+        <div style="margin-top: 20px;">
+          <p class="sec">Reservas sincronizadas</p>
+          <div class="info-box">
+            <div class="info-title">🔄 Automático</div>
+            <div class="info-text">As reservas são partilhadas em tempo real entre todos os utilizadores. A app atualiza automaticamente a cada 30 segundos. Pode também usar o botão <strong>🔄 Atualizar Reservas</strong> para forçar uma atualização imediata.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phone: Login screen -->
+      <div>
+        <p class="sec" style="text-align:center;">Ecrã de login</p>
+        <div class="phone" style="width:64mm; margin:0 auto;">
+          <div class="phone-screen" style="background:#f2f2f7; border-radius:12mm; min-height:130mm; padding-top:6mm;">
+            <div class="app-login">
+              <div class="app-login-card">
+                <div class="app-login-icon">🏋️</div>
+                <div class="app-login-title">MD<em>.</em>STUDIO</div>
+                <div class="app-login-sub">Estúdio de Fitness</div>
+
+                <div class="app-fg">
+                  <div class="app-lbl">Utilizador</div>
+                  <div class="app-input">mduser</div>
+                </div>
+                <div class="app-fg" style="margin-top:5px;">
+                  <div class="app-lbl">Palavra-passe</div>
+                  <div class="app-input">••••••••••</div>
+                </div>
+                <div class="app-btn-primary" style="margin-top:10px;">Entrar</div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-home-bar" style="background:#f2f2f7;"></div>
+        </div>
+
+        <div style="margin-top:14px; background:#f2f2f7; border-radius:10px; padding:12px 14px;">
+          <div style="font-size:11px; font-weight:700; margin-bottom:6px; color:#1c1c1e;">📲 Adicionar ao Ecrã de Início (iPhone)</div>
+          <div style="font-size:11px; color:#48484a; line-height:1.6;">
+            1. Abrir a app no <strong>Safari</strong><br>
+            2. Tocar em <strong>□↑</strong> (barra inferior)<br>
+            3. Selecionar <strong>"Adicionar ao Ecrã de Início"</strong><br>
+            4. Confirmar com <strong>"Adicionar"</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     PAGE 3 — FAZER UMA RESERVA (parte 1)
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="content-page" style="padding:10mm 14mm;">
+    <div class="page-header" style="margin-bottom:14px;">
+      <div class="ph-num">2</div>
+      <div class="ph-title">Fazer uma Reserva</div>
+      <div class="ph-logo">MD<em>.</em>STUDIO</div>
+    </div>
+
+    <div class="two-col" style="gap:14px;">
+      <!-- LEFT: steps -->
+      <div>
+        <p class="sec" style="margin-bottom:8px;">Passo a passo</p>
+
+        <div style="display:table; width:100%; border-collapse:collapse; font-size:12px; margin-bottom:10px;">
+          <div style="display:table-row; margin-bottom:6px;">
+            <div style="display:table-cell; width:26px; padding-bottom:8px; vertical-align:top; padding-top:1px;"><div class="step-num" style="width:22px;height:22px;font-size:11px;">1</div></div>
+            <div style="display:table-cell; padding-bottom:8px; vertical-align:top;"><strong>Selecionar a Data</strong><br><span style="color:#48484a;font-size:11.5px;">Lista com hoje e os próximos 7 dias.</span></div>
+          </div>
+          <div style="display:table-row;">
+            <div style="display:table-cell; width:26px; padding-bottom:8px; vertical-align:top; padding-top:1px;"><div class="step-num" style="width:22px;height:22px;font-size:11px;">2</div></div>
+            <div style="display:table-cell; padding-bottom:8px; vertical-align:top;"><strong>Escolher a Duração</strong><br><span style="color:#48484a;font-size:11.5px;">30 min, 1 hora ou 1h 30.</span></div>
+          </div>
+          <div style="display:table-row;">
+            <div style="display:table-cell; width:26px; padding-bottom:8px; vertical-align:top; padding-top:1px;"><div class="step-num" style="width:22px;height:22px;font-size:11px;">3</div></div>
+            <div style="display:table-cell; padding-bottom:8px; vertical-align:top;"><strong>Escolher a Zona</strong><br><span style="color:#48484a;font-size:11.5px;">🏃 Cardio ou 💪 Musculação (1 utilizador/zona).</span></div>
+          </div>
+          <div style="display:table-row;">
+            <div style="display:table-cell; width:26px; padding-bottom:8px; vertical-align:top; padding-top:1px;"><div class="step-num" style="width:22px;height:22px;font-size:11px;">4</div></div>
+            <div style="display:table-cell; padding-bottom:8px; vertical-align:top;"><strong>Selecionar o Horário</strong><br><span style="color:#48484a;font-size:11.5px;">Toque num bloco disponível. Fica azul quando selecionado.</span></div>
+          </div>
+          <div style="display:table-row;">
+            <div style="display:table-cell; width:26px; padding-bottom:8px; vertical-align:top; padding-top:1px;"><div class="step-num" style="width:22px;height:22px;font-size:11px;">5</div></div>
+            <div style="display:table-cell; padding-bottom:8px; vertical-align:top;"><strong>Nome / Habitação</strong><br><span style="color:#48484a;font-size:11.5px;">Escreva o nome e/ou nº de habitação.</span></div>
+          </div>
+          <div style="display:table-row;">
+            <div style="display:table-cell; width:26px; padding-bottom:8px; vertical-align:top; padding-top:1px;"><div class="step-num" style="width:22px;height:22px;font-size:11px;">6</div></div>
+            <div style="display:table-cell; padding-bottom:8px; vertical-align:top;"><strong>Código de Cancelamento</strong> <span style="font-weight:400;color:#8e8e93;">(opcional)</span><br><span style="color:#48484a;font-size:11.5px;">3 dígitos. Se vazio, qualquer um pode cancelar.</span></div>
+          </div>
+          <div style="display:table-row;">
+            <div style="display:table-cell; width:26px; padding-bottom:0; vertical-align:top; padding-top:1px;"><div class="step-num" style="width:22px;height:22px;font-size:11px;">7</div></div>
+            <div style="display:table-cell; padding-bottom:0; vertical-align:top;"><strong>Confirmar Reserva</strong><br><span style="color:#48484a;font-size:11.5px;">Toque em ✓ Confirmar. Guardada e sincronizada.</span></div>
+          </div>
+        </div>
+
+        <div class="info-box" style="margin-bottom:10px; padding:10px 12px;">
+          <div class="info-title" style="margin-bottom:3px;">📅 Horários</div>
+          <div class="info-text"><strong>Seg – Sex:</strong> 07:00 – 22:00 &nbsp;·&nbsp; <strong>Sáb / Dom:</strong> 07:00 – 21:00 · Blocos de 30 min.</div>
+        </div>
+
+        <div style="background:#f2f2f7; border-radius:10px; padding:9px 12px;">
+          <div style="font-size:11px; font-weight:700; margin-bottom:6px; color:#1c1c1e;">Legenda dos blocos</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 12px;">
+            <div class="legend-item" style="font-size:11px;"><div class="leg-dot" style="background:#fff;border:1.5px solid #d1d1d6;width:8px;height:8px;"></div> Disponível</div>
+            <div class="legend-item" style="font-size:11px;"><div class="leg-dot" style="background:#007aff;width:8px;height:8px;"></div> Selecionado</div>
+            <div class="legend-item" style="font-size:11px;"><div class="leg-dot" style="background:#ffcccb;width:8px;height:8px;"></div> Completo (2/2)</div>
+            <div class="legend-item" style="font-size:11px;"><div class="leg-dot" style="background:#ffd699;width:8px;height:8px;"></div> Zona ocupada</div>
+            <div class="legend-item" style="font-size:11px;"><div class="leg-dot" style="background:#e5e5ea;width:8px;height:8px;"></div> Já passou</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Phone mockup -->
+      <div style="display:flex; flex-direction:column; align-items:center;">
+        <p class="sec" style="text-align:center; margin-bottom:8px;">Formulário de reserva</p>
+        <div class="phone" style="width:55mm; margin:0 auto;">
+          <div class="phone-screen" style="border-radius:10mm; min-height:0;">
+            <div class="phone-notch" style="height:5mm; width:22mm; border-radius:0 0 3mm 3mm;"></div>
+            <div class="app-topbar" style="padding-top:6mm;">
+              <div class="app-tb-brand"><div class="app-tb-icon">🏋️</div>MD<em>.</em>STUDIO</div>
+              <div class="app-tb-exit">↩ Sair</div>
+            </div>
+            <div class="app-body" style="padding:6px 7px 2px;">
+              <div class="app-pt" style="margin-bottom:5px;">
+                <div class="app-pt-icon" style="width:18px;height:18px;font-size:9px;">📅</div>
+                <h2 style="font-size:8px;font-weight:800;margin-left:4px;">Nova Reserva</h2>
+              </div>
+              <div class="app-fg" style="margin-bottom:4px;">
+                <div class="app-lbl">Data</div>
+                <div class="app-select" style="font-size:5.5px;padding:4px 6px;">Hoje · Segunda-feira, 30-06-2026</div>
+              </div>
+              <div class="app-fg" style="margin-bottom:4px;">
+                <div class="app-lbl">Duração</div>
+                <div class="app-dur-seg" style="margin-bottom:0;">
+                  <div class="app-dur-btn" style="font-size:5px;padding:3px;">30 min</div>
+                  <div class="app-dur-btn act" style="font-size:5px;padding:3px;">1 hora</div>
+                  <div class="app-dur-btn" style="font-size:5px;padding:3px;">1h 30</div>
+                </div>
+              </div>
+              <div class="app-fg" style="margin-bottom:4px;">
+                <div class="app-lbl">Zona</div>
+                <div class="app-zone-grid" style="gap:3px;">
+                  <div class="app-zone-card sel" style="padding:4px 3px;">
+                    <span class="zi" style="font-size:10px;">🏃</span>
+                    <span class="zn">Cardio</span>
+                  </div>
+                  <div class="app-zone-card" style="padding:4px 3px;">
+                    <span class="zi" style="font-size:10px;">💪</span>
+                    <span class="zn">Musculação</span>
+                  </div>
+                </div>
+              </div>
+              <div class="app-fg" style="margin-bottom:4px;">
+                <div class="app-lbl">Horário</div>
+                <div class="app-slot-grid" style="gap:2px;">
+                  <div class="app-slot past" style="padding:3px 1px;font-size:5px;">07:00</div>
+                  <div class="app-slot past" style="padding:3px 1px;font-size:5px;">07:30</div>
+                  <div class="app-slot full" style="padding:3px 1px;font-size:5px;">08:00</div>
+                  <div class="app-slot sel" style="padding:3px 1px;font-size:5px;">08:30</div>
+                  <div class="app-slot" style="padding:3px 1px;font-size:5px;">09:00</div>
+                  <div class="app-slot taken" style="padding:3px 1px;font-size:5px;">09:30</div>
+                </div>
+              </div>
+              <div class="app-fg" style="margin-bottom:4px;">
+                <div class="app-lbl">Nome / Habitação</div>
+                <div class="app-input" style="padding:4px 6px;font-size:6px;">João Silva · Hab. 3A</div>
+              </div>
+              <div class="app-fg" style="margin-bottom:4px;">
+                <div class="app-lbl">Código cancelamento <span style="text-transform:none;letter-spacing:0;font-weight:400;">(opcional)</span></div>
+                <div class="app-input" style="padding:4px 6px;font-size:6px;">•••</div>
+              </div>
+              <div class="app-btn-primary" style="padding:5px;font-size:6.5px;margin-bottom:0;">✓ Confirmar Reserva</div>
+            </div>
+            <div class="app-bottom-nav" style="padding:3px 0 1px;">
+              <div class="app-bn-item act" style="font-size:4.5px;"><span class="bni" style="font-size:10px;">�</span>Reservar</div>
+              <div class="app-bn-item" style="font-size:4.5px;"><span class="bni" style="font-size:10px;">📆</span>Calendário</div>
+            </div>
+          </div>
+          <div class="phone-home-bar" style="height:4mm;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     PAGE 4 — CALENDÁRIO E CANCELAMENTO
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="content-page" style="padding:10mm 14mm;">
+    <div class="page-header" style="margin-bottom:14px;">
+      <div class="ph-num">3</div>
+      <div class="ph-title">Calendário & Cancelar Reserva</div>
+      <div class="ph-logo">MD<em>.</em>STUDIO</div>
+    </div>
+
+    <div class="three-col" style="gap:12px; align-items:start;">
+
+      <!-- COL 1: text -->
+      <div>
+        <p class="sec" style="margin-bottom:8px;">Calendário</p>
+        <p style="font-size:11.5px; color:#48484a; margin-bottom:8px;">Toque em <strong>📆 Calendário</strong> para ver todas as reservas. Alterne entre:</p>
+        <table style="margin-bottom:10px;">
+          <tr><th>Vista</th><th>O que mostra</th></tr>
+          <tr><td><strong>Hoje</strong></td><td>Dia atual</td></tr>
+          <tr><td><strong>7 Dias</strong></td><td>Próximos 7 dias</td></tr>
+          <tr><td><strong>Intervalo</strong></td><td>Período à escolha</td></tr>
+        </table>
+
+        <div class="info-box" style="padding:9px 11px; margin-bottom:10px;">
+          <div class="info-title" style="margin-bottom:3px;">🎨 Cores</div>
+          <div class="info-text"><span style="color:#007aff;font-weight:700;">Azul</span> = 🏃 Cardio &nbsp; <span style="color:#ff9500;font-weight:700;">Laranja</span> = 💪 Musculação. Reservas de 1h/1h30 preenchem todos os blocos.</div>
+        </div>
+
+        <p class="sec" style="margin-bottom:8px;">Cancelar reserva</p>
+        <div style="font-size:11.5px; color:#48484a; line-height:1.7;">
+          <div style="display:flex;gap:8px;margin-bottom:6px;align-items:flex-start;">
+            <div class="step-num" style="width:20px;height:20px;font-size:10px;flex-shrink:0;margin-top:1px;">1</div>
+            <div>Toque numa reserva (lista ou calendário)</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:6px;align-items:flex-start;">
+            <div class="step-num" style="width:20px;height:20px;font-size:10px;flex-shrink:0;margin-top:1px;">2</div>
+            <div>Toque em <strong>🗑️ Cancelar Reserva</strong></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:6px;align-items:flex-start;">
+            <div class="step-num" style="width:20px;height:20px;font-size:10px;flex-shrink:0;margin-top:1px;">3</div>
+            <div>Introduza o código (se a reserva tiver um)</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:10px;align-items:flex-start;">
+            <div class="step-num" style="width:20px;height:20px;font-size:10px;flex-shrink:0;margin-top:1px;">4</div>
+            <div>Confirme — reserva removida de todos os dispositivos</div>
+          </div>
+        </div>
+
+        <div class="info-box warn" style="padding:9px 11px; margin-bottom:0;">
+          <div class="info-title" style="margin-bottom:3px;">⚠️ Atenção</div>
+          <div class="info-text">O cancelamento é permanente. Se não se lembrar do código, não consegue cancelar a reserva.</div>
+        </div>
+      </div>
+
+      <!-- COL 2: Calendar phone -->
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <p class="sec" style="text-align:center;margin-bottom:8px;">Vista de Calendário</p>
+        <div class="phone" style="width:52mm;">
+          <div class="phone-screen" style="border-radius:9mm;min-height:0;">
+            <div class="phone-notch" style="height:4mm;width:20mm;border-radius:0 0 3mm 3mm;"></div>
+            <div class="app-topbar" style="padding-top:5mm;">
+              <div class="app-tb-brand" style="font-size:6px;"><div class="app-tb-icon" style="width:13px;height:13px;font-size:8px;">🏋️</div>MD<em>.</em>STUDIO</div>
+              <div class="app-tb-exit" style="font-size:5.5px;">↩ Sair</div>
+            </div>
+            <div class="app-body" style="padding:5px 6px 2px;">
+              <div class="app-pt" style="margin-bottom:5px;">
+                <div class="app-pt-icon" style="width:16px;height:16px;font-size:8px;background:linear-gradient(150deg,#5ac8fa,#007aff);">📆</div>
+                <h2 style="font-size:7.5px;font-weight:800;margin-left:4px;">Calendário</h2>
+              </div>
+              <div class="app-dur-seg" style="margin-bottom:5px;">
+                <div class="app-dur-btn act" style="font-size:4.5px;padding:3px;">Hoje</div>
+                <div class="app-dur-btn" style="font-size:4.5px;padding:3px;">7 Dias</div>
+                <div class="app-dur-btn" style="font-size:4.5px;padding:3px;">Intervalo</div>
+              </div>
+              <div class="app-cal-grid">
+                <div class="app-cal-row" style="grid-template-columns:18px 1fr;margin-bottom:2px;">
+                  <div></div>
+                  <div class="app-cal-hdr today"><div class="dow">SEG</div><div class="day" style="font-size:8px;">30</div></div>
+                </div>
+                <div class="app-cal-row" style="grid-template-columns:18px 1fr;margin-bottom:2px;">
+                  <div class="app-cal-tlbl" style="font-size:4.5px;">07:00</div><div class="app-cal-cell"></div>
+                </div>
+                <div class="app-cal-row" style="grid-template-columns:18px 1fr;margin-bottom:2px;">
+                  <div class="app-cal-tlbl" style="font-size:4.5px;">07:30</div><div class="app-cal-cell"></div>
+                </div>
+                <div class="app-cal-row" style="grid-template-columns:18px 1fr;margin-bottom:2px;">
+                  <div class="app-cal-tlbl" style="font-size:4.5px;">08:00</div><div class="app-cal-cell c"><span class="app-cal-chip" style="font-size:4px;">🏃 João S.</span></div>
+                </div>
+                <div class="app-cal-row" style="grid-template-columns:18px 1fr;margin-bottom:2px;">
+                  <div class="app-cal-tlbl" style="font-size:4.5px;">08:30</div><div class="app-cal-cell c"><span class="app-cal-chip" style="font-size:4px;">🏃 João S.</span></div>
+                </div>
+                <div class="app-cal-row" style="grid-template-columns:18px 1fr;margin-bottom:2px;">
+                  <div class="app-cal-tlbl" style="font-size:4.5px;">09:00</div><div class="app-cal-cell c"><span class="app-cal-chip" style="font-size:4px;">🏃 João S.</span></div>
+                </div>
+                <div class="app-cal-row" style="grid-template-columns:18px 1fr;margin-bottom:2px;">
+                  <div class="app-cal-tlbl" style="font-size:4.5px;">09:30</div><div class="app-cal-cell m"><span class="app-cal-chip m" style="font-size:4px;">💪 Ana M.</span></div>
+                </div>
+                <div class="app-cal-row" style="grid-template-columns:18px 1fr;">
+                  <div class="app-cal-tlbl" style="font-size:4.5px;">10:00</div><div class="app-cal-cell"></div>
+                </div>
+              </div>
+            </div>
+            <div class="app-bottom-nav" style="padding:3px 0 1px;">
+              <div class="app-bn-item" style="font-size:4px;"><span class="bni" style="font-size:10px;">📝</span>Reservar</div>
+              <div class="app-bn-item act" style="font-size:4px;"><span class="bni" style="font-size:10px;">📆</span>Calendário</div>
+            </div>
+          </div>
+          <div class="phone-home-bar" style="height:4mm;"></div>
+        </div>
+      </div>
+
+      <!-- COL 3: Modal phone -->
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <p class="sec" style="text-align:center;margin-bottom:8px;">Detalhe / Cancelar</p>
+        <div class="phone" style="width:52mm;">
+          <div class="phone-screen" style="border-radius:9mm;min-height:0;position:relative;">
+            <div class="phone-notch" style="height:4mm;width:20mm;border-radius:0 0 3mm 3mm;"></div>
+            <div class="app-topbar" style="padding-top:5mm;">
+              <div class="app-tb-brand" style="font-size:6px;"><div class="app-tb-icon" style="width:13px;height:13px;font-size:8px;">🏋️</div>MD<em>.</em>STUDIO</div>
+              <div class="app-tb-exit" style="font-size:5.5px;">↩ Sair</div>
+            </div>
+            <div class="app-body" style="padding:5px 6px;opacity:.3;">
+              <div class="app-sec-lbl">📋 Reservas de Hoje</div>
+              <div class="app-mini-bk" style="padding:4px 5px;"><span class="ico" style="font-size:10px;">🏃</span><div><div class="tm" style="font-size:5.5px;">09:00 – 10:00</div><div class="dt" style="font-size:5px;">João Silva · Cardio</div></div><span class="arr" style="font-size:8px;">›</span></div>
+            </div>
+            <div class="app-modal-ov">
+              <div class="app-modal" style="padding:10px 9px 8px;">
+                <h4 style="font-size:7.5px;margin-bottom:7px;">📋 Detalhes da Reserva</h4>
+                <div class="app-mrow" style="font-size:6px;padding:4px 0;"><span class="lbl">📅 Data</span><span class="val">Segunda, 30 Jun</span></div>
+                <div class="app-mrow" style="font-size:6px;padding:4px 0;"><span class="lbl">⏰ Horário</span><span class="val">09:00 – 10:00</span></div>
+                <div class="app-mrow" style="font-size:6px;padding:4px 0;"><span class="lbl">🏋️ Zona</span><span class="val">🏃 Cardio</span></div>
+                <div class="app-mrow" style="font-size:6px;padding:4px 0;border:none;"><span class="lbl">👤 Nome</span><span class="val">João Silva</span></div>
+                <div class="app-pin-field" style="font-size:5.5px;padding:4px 6px;margin:5px 0;">🔒 Código: ___</div>
+                <div class="app-modal-acts" style="gap:4px;margin-top:7px;">
+                  <div class="app-modal-del" style="font-size:5.5px;padding:4px;">🗑️ Cancelar</div>
+                  <div class="app-modal-close" style="font-size:5.5px;padding:4px;">Fechar</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-home-bar" style="height:4mm;"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     PAGE 5 — REFERÊNCIA RÁPIDA
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="content-page">
+    <div class="page-header">
+      <div class="ph-num">4</div>
+      <div class="ph-title">Referência Rápida</div>
+      <div class="ph-logo">MD<em>.</em>STUDIO</div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <p class="sec">Regras de utilização</p>
+        <table>
+          <tr><th>Regra</th><th>Detalhe</th></tr>
+          <tr><td><strong>Máx. por zona</strong></td><td>1 utilizador simultâneo (Cardio ou Musculação)</td></tr>
+          <tr><td><strong>Duração mínima</strong></td><td>30 minutos</td></tr>
+          <tr><td><strong>Duração máxima</strong></td><td>1 hora e 30 minutos</td></tr>
+          <tr><td><strong>Antecedência</strong></td><td>Hoje até +7 dias</td></tr>
+          <tr><td><strong>Horário semana</strong></td><td>07:00 – 22:00</td></tr>
+          <tr><td><strong>Horário fim de semana</strong></td><td>07:00 – 21:00</td></tr>
+        </table>
+
+        <p class="sec" style="margin-top:8px;">Código de cancelamento</p>
+        <table>
+          <tr><th>Situação</th><th>Comportamento</th></tr>
+          <tr><td>Sem código</td><td>Qualquer utilizador pode cancelar</td></tr>
+          <tr><td>Com código (3 dígitos)</td><td>Só quem souber o código pode cancelar</td></tr>
+          <tr><td>Código errado</td><td>Campo fica vermelho, tente novamente</td></tr>
+          <tr><td>Esqueceu o código</td><td>Contactar o Grupo do edifício</td></tr>
+        </table>
+
+        <p class="sec" style="margin-top:8px;">Sincronização</p>
+        <table>
+          <tr><th>Ação</th><th>Descrição</th></tr>
+          <tr><td>🔄 Automático</td><td>Atualiza a cada 30 segundos</td></tr>
+          <tr><td>🔄 Manual</td><td>Botão "Atualizar Reservas" no formulário</td></tr>
+          <tr><td>✓ Confirmada</td><td>Visível a todos imediatamente</td></tr>
+        </table>
+      </div>
+
+      <div>
+        <p class="sec">Resolução de problemas</p>
+        <div class="info-box warn" style="margin-bottom:12px;">
+          <div class="info-title">⚠️ A reserva não aparece no calendário</div>
+          <div class="info-text">Use o botão <strong>🔄 Atualizar Reservas</strong> ou aguarde até 30 segundos. Se persistir, verifique a ligação à internet.</div>
+        </div>
+        <div class="info-box warn" style="margin-bottom:12px;">
+          <div class="info-title">⚠️ O horário que quero aparece bloqueado</div>
+          <div class="info-text">O horário já foi reservado por outro utilizador para essa zona. Escolha um horário diferente ou a outra zona (se disponível).</div>
+        </div>
+        <div class="info-box warn" style="margin-bottom:12px;">
+          <div class="info-title">⚠️ Não consigo confirmar a reserva</div>
+          <div class="info-text">Verifique se preencheu todos os campos obrigatórios: data, zona, horário e nome. O código de cancelamento é opcional.</div>
+        </div>
+        <div class="info-box tip">
+          <div class="info-title">💡 Dica — Horário e data no formulário</div>
+          <div class="info-text">A data é uma lista — não abre calendário. Os horários já passados aparecem a cinzento e não podem ser selecionados.</div>
+        </div>
+
+        <div style="margin-top:20px; background:#f2f2f7; border-radius:12px; padding:16px;">
+          <div style="font-size:13px; font-weight:800; margin-bottom:10px; text-align:center;">Acesso Direto</div>
+          <div style="font-size:11px; color:#48484a; text-align:center; margin-bottom:12px;">Digitalize o endereço no browser ou guarde como favorito</div>
+          <div style="background:#007aff; color:#fff; border-radius:10px; padding:12px; text-align:center; font-size:13px; font-weight:700; letter-spacing:.3px; box-shadow: 0 3px 14px rgba(0,122,255,.3);">
+            jreifelix.github.io/mdstudio
+          </div>
+          <div style="margin-top:12px; font-size:10px; color:#8e8e93; text-align:center;">
+            Funciona em qualquer browser · iPhone · Android · Desktop
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="margin-top:24px; padding-top:14px; border-top:1px solid #f2f2f7; display:flex; justify-content:space-between; align-items:center;">
+      <div style="font-size:10px; color:#aeaeb2;">MD.Studio — Estúdio de Fitness · Uso interno</div>
+      <div style="font-size:10px; color:#aeaeb2;">Versão 2.0 · Junho 2026</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
