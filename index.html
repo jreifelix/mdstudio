@@ -593,7 +593,6 @@
             <div class="view-tabs">
                 <button class="v-tab act" id="tabToday"  onclick="switchView('today')">Hoje</button>
                 <button class="v-tab"     id="tabWeek"   onclick="switchView('week')">7 Dias</button>
-                <button class="v-tab"     id="tabCustom" onclick="switchView('custom')">Intervalo</button>
             </div>
 
             <!-- Custom range -->
@@ -659,7 +658,7 @@
 'use strict';
 
 /* ══════════ CONSTANTS & STATE ══════════ */
-const HS = 7;                      // studio open hour
+const HS = 8;                      // studio open hour
 // weekdays (Mon–Fri) → last slot 21h–22h; weekends (Sat–Sun) → last slot 20h–21h
 function getHE(dateStr) {
     if (!dateStr) return 21;
