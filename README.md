@@ -8,7 +8,7 @@ Desenvolvida em HTML, CSS e JavaScript puro — sem dependências externas.
 ## ✨ Funcionalidades
 
 - **Reservas com duração variável** — 30 min, 1 hora ou 1h 30
-- **Horário alargado** — 07:00 às 22:00 em dias de semana · 07:00 às 21:00 ao fim de semana
+- **Horário alargado** — 08:00 às 22:00 em dias de semana · 07:00 às 21:00 ao fim de semana
 - **Duas zonas independentes** — 🏃 Cardio e 💪 Musculação (máx. 2 ocupantes simultâneos)
 - **Selector de data sem popup** — combobox com hoje + 7 dias seguintes (Dia da Semana, DD-MM-YYYY)
 - **Calendário integrado** — vista por dia, 7 dias ou intervalo personalizado
@@ -47,8 +47,8 @@ A reserva fica imediatamente visível no calendário e sincronizada com o Google
 
 | Dia | Primeiro bloco | Último bloco |
 |---|---|---|
-| Segunda a Sexta | 07:00 | 21:30 – 22:00 |
-| Sábado e Domingo | 07:00 | 20:30 – 21:00 |
+| Segunda a Sexta | 08:00 | 21:30 – 22:00 |
+| Sábado e Domingo | 08:00 | 20:30 – 21:00 |
 
 ---
 
