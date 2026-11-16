@@ -12,6 +12,7 @@ Desenvolvida em HTML, CSS e JavaScript puro — sem dependências externas.
 - **Duas zonas independentes** — 🏃 Cardio e 💪 Musculação (máx. 2 ocupantes simultâneos)
 - **Selector de data sem popup** — combobox com hoje + 7 dias seguintes (Dia da Semana, DD-MM-YYYY)
 - **Calendário integrado** — vista por dia, 7 dias ou intervalo personalizado
+- **Manutenção no telemóvel** — próxima limpeza, três passadas recentes e alerta após dez dias sem limpeza
 - **Reservas multi-slot** — no calendário, toda a duração fica colorida e clicável
 - **Sincronização com Google Calendar** — fonte de verdade partilhada entre todos os dispositivos
 - **Auto-refresh a cada 30 segundos** — reservas sempre atualizadas
@@ -40,6 +41,16 @@ Para instalar como app no iPhone: Safari → Partilhar → Adicionar ao Ecrã de
 7. Confirmar a reserva
 
 A reserva fica imediatamente visível no calendário e sincronizada com o Google Calendar.
+
+---
+
+## 🧹 Manutenção (dispositivos móveis)
+
+1. Abrir o separador **Manutenção** na navegação inferior
+2. Selecionar uma data a partir de hoje e uma hora disponível em blocos de 30 minutos (08:00–20:30)
+3. Introduzir o **Nome / Habitação** e agendar a limpeza
+
+O evento fica registado às **00:00** no Google Calendar; a hora escolhida e o Nome / Habitação ficam nos detalhes. A área mostra apenas a próxima limpeza agendada e as três limpezas passadas mais recentes. Se não houver limpeza registada nos últimos dez dias, a tab de Manutenção fica destacada e aparece um aviso antes do formulário. Um treino não pode sobrepor-se aos 30 minutos de uma limpeza agendada. Os restantes eventos continuam guardados no calendário; a próxima limpeza apresentada pode ser reagendada ou cancelada.
 
 ---
 

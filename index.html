@@ -195,6 +195,27 @@
             overflow-y: auto; padding: 20px 16px 32px; background: var(--bg);
         }
         .panel-right { overflow-y: auto; padding: 20px 16px 32px; background: var(--bg); }
+        .panel-maintenance { display: none; overflow-y: auto; padding: 20px 16px 32px; background: var(--bg); }
+
+        .maintenance-card {
+            background: var(--surface); border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm); padding: 13px 14px; margin-bottom: 8px;
+        }
+        .maintenance-reminder {
+            margin-bottom: 14px; padding: 11px 12px;
+            border: 1px solid rgba(255,149,0,.32); border-left: 3px solid var(--orange);
+            border-radius: var(--radius-sm); background: var(--orange-dim);
+            color: var(--text); font-weight: 600;
+        }
+        .maintenance-card.next { border-left: 3px solid var(--green); }
+        .maintenance-card-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+        .maintenance-date { font-size: 13px; font-weight: 700; color: var(--text); }
+        .maintenance-time { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .maintenance-name { font-size: 13px; color: var(--text2); margin-top: 7px; overflow-wrap: anywhere; }
+        .maintenance-actions { display: flex; gap: 6px; margin-top: 10px; }
+        .maintenance-actions .btn { flex: 1; padding: 8px 10px; font-size: 12px; }
+        .maintenance-form-actions { display: flex; flex-direction: column; gap: 8px; }
+        .maintenance-empty { text-align: center; padding: 18px 12px; color: var(--muted); font-size: 13px; }
 
         /* Panel titles */
         .pt { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
@@ -405,6 +426,13 @@
             cursor: pointer; transition: color .15s;
         }
         .bn-item.act { color: var(--accent); }
+        .bn-item.needs-attention { color: var(--red); }
+        .bn-item.needs-attention .bn-ico { position: relative; display: inline-block; }
+        .bn-item.needs-attention .bn-ico::after {
+            content: ''; position: absolute; top: -2px; right: -5px;
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--red); border: 2px solid var(--surface);
+        }
         .bn-ico { font-size: 22px; line-height: 1; }
 
         @keyframes slideUp {
@@ -418,7 +446,8 @@
             .main-grid { grid-template-columns: 1fr; max-height: none; overflow: visible; }
             .panel-left  { border-right: none; overflow-y: visible; }
             .panel-right { overflow-y: visible; }
-            .panel-left.panel-hidden, .panel-right.panel-hidden { display: none; }
+            .panel-maintenance { display: block; overflow-y: visible; padding: 14px 12px 20px; }
+            .panel-left.panel-hidden, .panel-right.panel-hidden, .panel-maintenance.panel-hidden { display: none; }
             .bottom-nav { display: block; }
             .tb-date { display: none; }
             .topbar { height: 50px; padding: 0 16px; }
@@ -617,6 +646,46 @@
 
         </div>
 
+        <!-- ─── PANEL : MAINTENANCE (mobile only) ─── -->
+        <div class="panel-maintenance panel-hidden" id="panelMaintenance">
+            <div class="pt">
+                <div class="pt-icon" style="background:var(--green-dim);">🧹</div>
+                <div>
+                    <h2>Manutenção</h2>
+                    <p>Limpezas e agendamentos</p>
+                </div>
+            </div>
+
+            <div class="maintenance-reminder" id="maintenanceReminder" role="status" aria-live="polite" style="display:none;"></div>
+            <div class="sec-lbl">Agendar limpeza</div>
+            <div class="fg">
+                <label for="maintenanceDate">Data</label>
+                <input type="date" id="maintenanceDate" onchange="updateMaintenanceTimeOptions()">
+            </div>
+            <div class="fg">
+                <label for="maintenanceTime">Hora da limpeza</label>
+                <select id="maintenanceTime"></select>
+            </div>
+            <div class="fg">
+                <label for="maintenanceName">Nome / Habitação</label>
+                <input type="text" id="maintenanceName" placeholder="Ex: João Silva · Hab. 3A" autocomplete="off">
+            </div>
+            <div class="maintenance-form-actions">
+                <button class="btn btn-primary btn-full" id="maintenanceSubmitBtn" onclick="submitMaintenance()">🧹 &nbsp;Agendar Limpeza</button>
+                <button class="btn btn-ghost btn-full" id="maintenanceCancelEdit" onclick="cancelMaintenanceEdit()" style="display:none;">Cancelar Edição</button>
+            </div>
+            <div class="alert" id="maintenanceMsg"></div>
+
+            <hr class="div">
+            <div class="sec-lbl">Próxima limpeza</div>
+            <div id="nextMaintenance"></div>
+
+            <hr class="div">
+            <div class="sec-lbl">Últimas 3 limpezas</div>
+            <div id="pastMaintenance"></div>
+            <button class="btn btn-ghost btn-full" onclick="gcalSyncMaintenance(false)" style="margin-top:8px;">🔄 &nbsp;Atualizar Limpezas</button>
+        </div>
+
     </div><!-- /main-grid -->
 
     <!-- ─── BOTTOM NAV (mobile only) ─── -->
@@ -629,6 +698,10 @@
             <button class="bn-item" id="bnCalendario" onclick="switchPanel('right')">
                 <span class="bn-ico">📆</span>
                 Calendário
+            </button>
+            <button class="bn-item" id="bnMaintenance" onclick="switchPanel('maintenance')">
+                <span class="bn-ico">🧹</span>
+                Manutenção
             </button>
         </div>
     </nav>
@@ -660,12 +733,14 @@
 /* ══════════ CONSTANTS & STATE ══════════ */
 const HS = 8;                      // studio open hour
 // Daily closing time; the final booking slot is 20:30-21:00.
-function getHE() { return 21; }
+function getHE(dateStr) { return 21; }
 const ZC = 'cardio';
 const ZM = 'musculação';
 const SK = 'mdstudio_v2';
 
 let bookings = loadData();
+let maintenanceRecords = [];
+let editingMaintenanceId = null;
 let view     = 'today';
 let selH     = null;              // selected start hour in booking form
 let selDur   = 1;                 // selected duration in hours (0.5 | 1 | 1.5)
@@ -752,6 +827,7 @@ function initApp() {
     renderCalendar();
     renderTodayList();
     updateZoneSt();
+    initMaintenanceForm();
     gcalLoad();
 }
 
@@ -798,6 +874,7 @@ function updateZoneSt() {
     const he=getHE(date);
     let cf=0, mf=0;
     for(let h=HS; h<he; h+=0.5) {
+        if(maintenanceOverlapsBooking(date,h,selDur)) continue;
         let cOk=true, mOk=true;
         for(let s=h; s<h+selDur-0.01; s+=0.5) {
             if(s+0.5>he+0.01){ cOk=false; mOk=false; break; }
@@ -832,10 +909,11 @@ function buildSlotGrid() {
         btn.textContent=fmtH(h);
 
         // Check every 30-min sub-slot the full duration would occupy
-        let isPast=false, isFull=false, isZoneTaken=false, outOfBounds=false;
+        let isPast=false, isFull=false, isZoneTaken=false, isMaintenance=false, outOfBounds=false;
         for(let s=h; s<h+selDur-0.01; s+=0.5) {
             if(s+0.5>he+0.01){ outOfBounds=true; break; }
             if(isToday && s<nowMins){ isPast=true; break; }
+            if(maintenanceOverlapsBooking(date,s,0.5)){ isMaintenance=true; break; }
             const sb=bookings.filter(b=>b.date===date && b.hour<=s && s<b.hour+(b.duration||0.5));
             if(sb.some(b=>b.zone===ZC)&&sb.some(b=>b.zone===ZM)){ isFull=true; break; }
             if(zone && sb.some(b=>b.zone===zone)){ isZoneTaken=true; break; }
@@ -844,6 +922,9 @@ function buildSlotGrid() {
         if(outOfBounds||isPast) {
             btn.classList.add('past'); btn.disabled=true;
             btn.title=outOfBounds?'Duração ultrapassa o horário de fecho':'Horário já passou';
+        } else if(isMaintenance) {
+            btn.classList.add('full'); btn.disabled=true;
+            btn.title='Indisponível durante a limpeza';
         } else if(isFull) {
             btn.classList.add('full'); btn.disabled=true;
             btn.title='Slot completo (Cardio + Musculação)';
@@ -878,6 +959,7 @@ function submitBooking() {
     if(!name)      { showMsg('err','Por favor, introduza o nome ou habitação.'); return; }
     if(pinRaw && !pinRaw.match(/^\d{3}$/)) { showMsg('err','O código deve ter exatamente 3 dígitos numéricos (ou deixe vazio).'); return; }
     if(selH+selDur > getHE(date)+0.01) { showMsg('err','A duração selecionada ultrapassa o horário de fecho.'); return; }
+    if(maintenanceOverlapsBooking(date,selH,selDur)) { showMsg('err','Este horário está reservado para uma limpeza.'); return; }
 
     // Check conflicts across all sub-slots of the duration
     for(let s=selH; s<selH+selDur-0.01; s+=0.5) {
@@ -1066,24 +1148,18 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 /* ══════════ MOBILE PANEL SWITCHER ══════════ */
 function switchPanel(p) {
-    const pL=document.getElementById('panelLeft');
-    const pR=document.getElementById('panelRight');
-    const bL=document.getElementById('bnReservar');
-    const bR=document.getElementById('bnCalendario');
-    if(p==='left') {
-        pL.classList.remove('panel-hidden');
-        pR.classList.add('panel-hidden');
-        bL.classList.add('act');
-        bR.classList.remove('act');
-        window.scrollTo({top:0, behavior:'smooth'});
-    } else {
-        pL.classList.add('panel-hidden');
-        pR.classList.remove('panel-hidden');
-        bL.classList.remove('act');
-        bR.classList.add('act');
-        renderCalendar();
-        window.scrollTo({top:0, behavior:'smooth'});
-    }
+    const panels={
+        left:['panelLeft','bnReservar'],
+        right:['panelRight','bnCalendario'],
+        maintenance:['panelMaintenance','bnMaintenance']
+    };
+    Object.entries(panels).forEach(([key,ids])=>{
+        document.getElementById(ids[0]).classList.toggle('panel-hidden',key!==p);
+        document.getElementById(ids[1]).classList.toggle('act',key===p);
+    });
+    if(p==='right') renderCalendar();
+    if(p==='maintenance') gcalSyncMaintenance(false);
+    window.scrollTo({top:0, behavior:'smooth'});
 }
 
 /* ══════════ GOOGLE APPS SCRIPT SYNC (sem popup, sem OAuth) ══════════ */
@@ -1097,8 +1173,12 @@ function gcalLoad() {
     const sBtn = document.getElementById('syncBtn');
     if (sBtn) sBtn.style.display = 'inline-flex';
     gcalSyncFromCalendar(true);
+    gcalSyncMaintenance(true);
     // Auto-refresh every 30 seconds
-    setInterval(() => gcalSyncFromCalendar(true), 30000);
+    setInterval(() => {
+        gcalSyncFromCalendar(true);
+        gcalSyncMaintenance(true);
+    }, 30000);
 }
 
 async function gcalSyncFromCalendar(silent = false) {
@@ -1125,7 +1205,188 @@ async function gcalSyncFromCalendar(silent = false) {
     }
 }
 
-function gcalFetchJSONP() {
+async function gcalSyncMaintenance(silent = true) {
+    if (!gcalEnabled) return false;
+    try {
+        const events = await gcalFetchJSONP('maintenance');
+        if (!Array.isArray(events)) throw new Error('invalid maintenance response');
+        maintenanceRecords = events.map(gcalParseMaintenanceEvent).filter(Boolean);
+        renderMaintenance();
+        buildSlotGrid();
+        updateZoneSt();
+        return true;
+    } catch (error) {
+        console.warn('Maintenance sync failed:', error);
+        if (!silent) showMaintenanceMessage('err', 'Não foi possível carregar as limpezas. Confirme se a nova versão do Apps Script está publicada.');
+        return false;
+    }
+}
+
+function initMaintenanceForm() {
+    const dateInput=document.getElementById('maintenanceDate');
+    dateInput.min=todayStr();
+    dateInput.value=addD(todayStr(),1);
+    document.getElementById('maintenanceTime').innerHTML=maintenanceSlotTimes()
+        .map(time=>`<option value="${time}">${time}</option>`).join('');
+    updateMaintenanceTimeOptions();
+}
+
+function updateMaintenanceTimeOptions() {
+    const dateInput=document.getElementById('maintenanceDate');
+    const timeInput=document.getElementById('maintenanceTime');
+    const previous=timeInput.value;
+    const now=new Date();
+    const currentTime=`${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const available=maintenanceSlotTimes().filter(time=>dateInput.value!==todayStr()||time>currentTime);
+    timeInput.innerHTML=available.map(time=>`<option value="${time}">${time}</option>`).join('');
+    timeInput.value=available.includes(previous)?previous:(available[0]||'');
+}
+
+function renderMaintenance() {
+    const groups=groupMaintenanceRecords(maintenanceRecords);
+    const recent=groups.past.slice(0,3);
+    const reminder=maintenanceReminderMessage(groups.latest);
+    const reminderElement=document.getElementById('maintenanceReminder');
+    reminderElement.textContent=reminder;
+    reminderElement.style.display=reminder?'block':'none';
+    document.getElementById('bnMaintenance').classList.toggle('needs-attention',Boolean(reminder));
+    document.getElementById('nextMaintenance').innerHTML=groups.next
+        ? maintenanceCard(groups.next,true,'next')
+        : '<div class="maintenance-empty">Não há limpezas agendadas.</div>';
+    document.getElementById('pastMaintenance').innerHTML=recent.length
+        ? recent.map(record=>maintenanceCard(record,false,'')).join('')
+        : '<div class="maintenance-empty">Ainda não há limpezas passadas.</div>';
+}
+
+function maintenanceReminderMessage(lastCleaning, today=todayStr()) {
+    if(!lastCleaning) return 'Ainda não há uma limpeza registada. Deve ser marcada uma nova limpeza.';
+    const currentDate=parseD(today);
+    const lastDate=parseD(lastCleaning.date);
+    const days=Math.floor((Date.UTC(currentDate.getFullYear(),currentDate.getMonth(),currentDate.getDate())-
+        Date.UTC(lastDate.getFullYear(),lastDate.getMonth(),lastDate.getDate()))/86400000);
+    return days>=10
+        ? `A última limpeza do estúdio foi há ${days} dias. Deve ser marcada uma nova limpeza.`
+        : '';
+}
+
+function maintenanceCard(record, editable, extraClass) {
+    const date=parseD(record.date);
+    const dateLabel=`${DOW_LONG[date.getDay()]}, ${date.getDate()} de ${MON_LONG[date.getMonth()]} de ${date.getFullYear()}`;
+    const actions=editable?`<div class="maintenance-actions">
+        <button class="btn btn-ghost" onclick="editMaintenance(this.closest('.maintenance-card').dataset.eventId)">✎ &nbsp;Alterar</button>
+        <button class="btn btn-danger" onclick="deleteMaintenance(this.closest('.maintenance-card').dataset.eventId)">🗑 &nbsp;Cancelar</button>
+    </div>`:'';
+    return `<article class="maintenance-card ${extraClass}" data-event-id="${esc(record.eventId)}">
+        <div class="maintenance-card-head"><div><div class="maintenance-date">${dateLabel}</div><div class="maintenance-time">${esc(record.time)}</div></div></div>
+        <div class="maintenance-name">${esc(record.name)}</div>${actions}
+    </article>`;
+}
+
+function showMaintenanceMessage(type, message) {
+    const element=document.getElementById('maintenanceMsg');
+    element.textContent=message;
+    element.style.display='block';
+    element.style.color=type==='ok'?'var(--green)':'var(--red)';
+}
+
+function validateMaintenanceForm() {
+    const date=document.getElementById('maintenanceDate').value;
+    const time=document.getElementById('maintenanceTime').value;
+    const name=document.getElementById('maintenanceName').value.trim();
+    const now=new Date();
+    const currentTime=`${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    if(!date||date<todayStr()||(date===todayStr()&&time<=currentTime)||
+       !maintenanceSlotTimes().includes(time)||!name||name.length>100) {
+        showMaintenanceMessage('err','Escolha uma data e hora futuras válidas e indique o Nome / Habitação.');
+        return null;
+    }
+    return { date, time, name };
+}
+
+async function submitMaintenance() {
+    const input=validateMaintenanceForm();
+    if(!input) return;
+    if(!gcalEnabled) {
+        showMaintenanceMessage('err','A ligação ao calendário não está disponível.');
+        return;
+    }
+    const button=document.getElementById('maintenanceSubmitBtn');
+    const isEditing=Boolean(editingMaintenanceId);
+    const eventId=editingMaintenanceId;
+    const matchingBefore=maintenanceRecords.filter(record=>record.date===input.date&&record.time===input.time&&record.name===input.name).length;
+    button.disabled=true;
+    try {
+        await gcalPostMaintenance({
+            action:isEditing?'update-maintenance':'create-maintenance',
+            eventId,
+            ...input
+        });
+        if(!await gcalSyncMaintenance(true)) throw new Error('maintenance sync failed');
+        const saved=isEditing
+            ? maintenanceRecords.some(record=>record.eventId===eventId&&record.date===input.date&&record.time===input.time&&record.name===input.name)
+            : maintenanceRecords.filter(record=>record.date===input.date&&record.time===input.time&&record.name===input.name).length>matchingBefore;
+        if(!saved) throw new Error('maintenance write not found');
+        showMaintenanceMessage('ok',isEditing?'Limpeza reagendada.':'Limpeza agendada.');
+        resetMaintenanceForm();
+    } catch(error) {
+        showMaintenanceMessage('err','Não foi possível guardar a limpeza. Verifique a ligação ao calendário.');
+    } finally {
+        button.disabled=false;
+    }
+}
+
+function editMaintenance(eventId) {
+    const record=maintenanceRecords.find(item=>item.eventId===eventId);
+    if(!record) return;
+    editingMaintenanceId=eventId;
+    document.getElementById('maintenanceDate').value=record.date;
+    document.getElementById('maintenanceTime').value=record.time;
+    updateMaintenanceTimeOptions();
+    document.getElementById('maintenanceTime').value=record.time;
+    document.getElementById('maintenanceName').value=record.name;
+    document.getElementById('maintenanceSubmitBtn').textContent='Guardar Alterações';
+    document.getElementById('maintenanceCancelEdit').style.display='inline-flex';
+    window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function cancelMaintenanceEdit() {
+    resetMaintenanceForm();
+}
+
+function resetMaintenanceForm() {
+    editingMaintenanceId=null;
+    document.getElementById('maintenanceDate').value=addD(todayStr(),1);
+    document.getElementById('maintenanceName').value='';
+    document.getElementById('maintenanceSubmitBtn').textContent='🧹  Agendar Limpeza';
+    document.getElementById('maintenanceCancelEdit').style.display='none';
+    updateMaintenanceTimeOptions();
+}
+
+async function deleteMaintenance(eventId) {
+    const record=maintenanceRecords.find(item=>item.eventId===eventId);
+    if(!record||!confirm(`Cancelar a limpeza de ${fmtDateLong(record.date)} às ${record.time}?`)) return;
+    try {
+        await gcalPostMaintenance({action:'delete-maintenance',eventId});
+        if(!await gcalSyncMaintenance(true)||maintenanceRecords.some(item=>item.eventId===eventId)) {
+            throw new Error('maintenance delete failed');
+        }
+        if(editingMaintenanceId===eventId) resetMaintenanceForm();
+        showMaintenanceMessage('ok','Limpeza cancelada.');
+    } catch(error) {
+        showMaintenanceMessage('err','Não foi possível cancelar a limpeza. Verifique a ligação ao calendário.');
+    }
+}
+
+function gcalPostMaintenance(data) {
+    return fetch(AS_URL, {
+        method:'POST',
+        mode:'no-cors',
+        headers:{'Content-Type':'text/plain'},
+        body:JSON.stringify(data)
+    });
+}
+
+function gcalFetchJSONP(action = 'list') {
     return new Promise((resolve, reject) => {
         const cb = '_gcb_' + Date.now();
         const s  = document.createElement('script');
@@ -1134,7 +1395,7 @@ function gcalFetchJSONP() {
         }, 12000);
         window[cb] = (data) => { cleanup(); resolve(data); };
         s.onerror   = () => { cleanup(); reject(new Error('script error')); };
-        s.src = `${AS_URL}?action=list&callback=${cb}`;
+        s.src = `${AS_URL}?action=${encodeURIComponent(action)}&callback=${cb}`;
         function cleanup() {
             clearTimeout(timer);
             delete window[cb];
@@ -1186,6 +1447,43 @@ function gcalParseEvent(ev) {
     const pin  = get('pin') || '';
     if (!date || isNaN(hour) || !zone || !name) return null;
     return { id, date, hour, duration, zone, name, pin, createdAt: ev.start || new Date().toISOString() };
+}
+
+function maintenanceSlotTimes() {
+    const slots=[];
+    for(let hour=8;hour<21;hour+=0.5) slots.push(fmtH(hour));
+    return slots;
+}
+
+function maintenanceOverlapsBooking(date, startHour, duration) {
+    const endHour=startHour+duration;
+    return maintenanceRecords.some(record=>{
+        if(record.date!==date) return false;
+        const [hour,minute]=record.time.split(':').map(Number);
+        const cleaningStart=hour+minute/60;
+        return startHour<cleaningStart+0.5&&cleaningStart<endHour;
+    });
+}
+
+function gcalParseMaintenanceEvent(ev) {
+    const description=ev.description||'';
+    const get=key=>{ const match=description.match(new RegExp(`^${key}: (.+)$`,'m')); return match?match[1].trim():null; };
+    const eventId=ev.eventId||ev.id;
+    const hasStructuredData=ev.date&&ev.time&&ev.name;
+    if(!hasStructuredData&&!description.includes('[MDSTUDIO_MAINTENANCE_v1]')) return null;
+    const date=ev.date||get('date');
+    const time=ev.time||get('time');
+    const name=ev.name||get('name');
+    if(!eventId||!date||!time||!name||!maintenanceSlotTimes().includes(time)) return null;
+    return { eventId, date, time, name };
+}
+
+function groupMaintenanceRecords(records, today=todayStr(), currentTime=fmtH(new Date().getHours()+(new Date().getMinutes()>=30?0.5:0))) {
+    const sorted=records.slice().sort((a,b)=>(a.date+'T'+a.time).localeCompare(b.date+'T'+b.time));
+    const cutoff=today+'T'+currentTime;
+    const past=sorted.filter(record=>(record.date+'T'+record.time)<=cutoff).reverse();
+    const upcoming=sorted.filter(record=>(record.date+'T'+record.time)>cutoff);
+    return { past, upcoming, latest:past[0]||null, next:upcoming[0]||null };
 }
 </script>
 </body>
